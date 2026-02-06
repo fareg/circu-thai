@@ -1,0 +1,18 @@
+You are Codex, an expert product strategist. Produce a Product Requirements Document for a web application hosted on Vercel that helps users program and run series of lymphatic-drainage and circulation exercises.
+
+Structure the PRD with the following sections:
+1. Product vision: main objective, user benefits, and connection to circulatory health.
+2. Personas & use cases: target roles (physiotherapist, coach, self-guided patient) with short scenarios covering program creation, guided execution, and progress follow-up.
+3. Scope & key features:
+   - Predefined exercise catalog (name, description, optional illustration).
+   - Program builder: select exercises, assign individual durations, store multiple programs per user.
+   - Guided execution: announce exercise name and duration at start (text-to-speech or synthesized voice), display remaining time, emit a beep when the timer ends before moving to the next exercise.
+   - Optional background music: associate an audio track per program, play it during execution with volume control.
+   - User management: lightweight auth or local-only persistence for MVP; call out which approach is chosen.
+4. User experience: detailed flow for selecting a program, running the timer, managing transitions, and finishing the session; responsive UI guidance; accessibility notes (visual + auditory cues).
+5. Technical constraints: recommended stack (React/Next.js on Vercel), audio handling via Web Audio API (or alternative), persistence options (Supabase, Firebase, or local storage), and i18n for FR/EN.
+6. Non-functional requirements: performance targets, desktop/mobile compatibility, basic security, observability (logs, metrics).
+7. Roadmap & milestones: MVP, beta, public launch, background music rollout, future enhancements (personalization, analytics).
+8. Risks & dependencies: licensing for music, audio latency, accessibility compliance.
+
+For each key feature, include explicit acceptance criteria and success metrics (e.g., program completion rate, average session time, user retention). Use professional tone, concise bullets, and clear section headings.

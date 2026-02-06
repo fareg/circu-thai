@@ -1,0 +1,81 @@
+{
+  "nav": {
+    "home": "Home",
+    "programs": "Programs",
+    "builder": "Builder",
+    "run": "Run",
+    "cta": "Get Started"
+  },
+  "hero": {
+    "title": "CircuThai sequences for gentle drainage",
+    "subtitle": "Stack circulation friendly moves, sync cues and audio, and stay consistent with daily flows.",
+    "primary": "Build a program",
+    "secondary": "Explore features"
+  },
+  "features": {
+    "catalog": "Circulation focused catalog",
+    "catalogBody": "15 therapist vetted drills with adjustable durations and body zone tags.",
+    "builder": "Visual builder",
+    "builderBody": "Tap to add, reorder with arrows, and validate total timing instantly.",
+    "guidance": "Audio coach",
+    "guidanceBody": "Text to speech names, sharp completion beeps, and next step preview.",
+    "music": "Background music",
+    "musicBody": "Attach looping ambient tracks with their own volume control."
+  },
+  "programs": {
+    "title": "Saved programs",
+    "empty": "No programs saved yet.",
+    "import": "Import",
+    "export": "Export",
+    "delete": "Delete",
+    "run": "Run",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "copySuffix": " (copy)",
+    "duplicateSuccess": "Copied",
+    "duplicateError": "Unable to duplicate.",
+    "total": "Total",
+    "sessions": "Sessions completed"
+  },
+  "builder": {
+    "title": "Assemble a sequence",
+    "nameLabel": "Program name",
+    "musicLabel": "Background audio (URL)",
+    "filters": "Filters",
+    "zone": "Zone",
+    "intensity": "Intensity",
+    "reset": "Reset",
+    "search": "Search",
+    "add": "Add",
+    "save": "Save",
+    "total": "Total duration",
+    "duplicate": "This name already exists.",
+    "success": "Program saved.",
+    "error": "Unable to save program.",
+    "duration": "Duration",
+    "notes": "Quick notes",
+    "emptyTimeline": "Add exercises to see the timeline."
+  },
+  "run": {
+    "heading": "Guided session",
+    "ready": "Ready to start",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "skip": "Skip",
+    "next": "Next",
+    "completed": "Session complete",
+    "log": "Session log",
+    "music": "Background music",
+    "volume": "Volume",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "missing": "Program not found.",
+    "missingHint": "Pick a valid identifier from your saved programs below.",
+    "missingEmpty": "No program saved yet. Create your first flow via the builder.",
+    "openBuilder": "Open builder",
+    "viewPrograms": "View programs",
+    "elapsed": "Elapsed",
+    "remaining": "Remaining"
+  }
+}

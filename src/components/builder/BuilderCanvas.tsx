@@ -1,0 +1,220 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Exercise } from "@/types";
+import { ExerciseCard } from "@/components/exercises/ExerciseCard";
+import { ExerciseFilterState, ExerciseFilters } from "@/components/exercises/ExerciseFilters";
+import { ProgramTimeline } from "@/components/programs/ProgramTimeline";
+import { ProgramStep } from "@/types";
+import { useExercises, useProgramActions, usePrograms } from "@/hooks/usePrograms";
+import { useProgramDraftStore } from "@/store/programDraft";
+
+interface BuilderCanvasProps {
+  labels: {
+    title: string;
+    nameLabel: string;
+    musicLabel: string;
+    notes: string;
+    save: string;
+    add: string;
+    total: string;
+    duration: string;
+    duplicate: string;
+    success: string;
+    error: string;
+    emptyTimeline: string;
+    filters: string;
+    zone: string;
+    intensity: string;
+    reset: string;
+    search: string;
+  };
+  programId?: string;
+}
+
+const initialFilters: ExerciseFilterState = { zone: "all", intensity: "all", search: "" };
+
+const newId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
+
+export function BuilderCanvas({ labels, programId }: BuilderCanvasProps) {
+  const exercises = useExercises() ?? [];
+  const programs = usePrograms() ?? [];
+  const { persist } = useProgramActions();
+  const [filters, setFilters] = useState(initialFilters);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const {
+    name,
+    musicUrl,
+    notes,
+    steps,
+    setName,
+    setMusicUrl,
+    setNotes,
+    addStep,
+    moveStep,
+    reorderStep,
+    removeStep,
+    updateDuration,
+    reset,
+    loadFromProgram,
+  } = useProgramDraftStore();
+  const [draftSourceId, setDraftSourceId] = useState<string | null>(null);
+
+  const editingProgram = useMemo(() => programs.find((program) => program.id === programId), [programId, programs]);
+
+  useEffect(() => {
+    if (programId && editingProgram && draftSourceId !== programId) {
+      loadFromProgram(editingProgram);
+      setDraftSourceId(programId);
+      setFeedback(null);
+    }
+    if (!programId && draftSourceId) {
+      reset();
+      setDraftSourceId(null);
+      setFeedback(null);
+    }
+  }, [draftSourceId, editingProgram, loadFromProgram, programId, reset]);
+
+  const filteredExercises = useMemo(() => {
+    return exercises.filter((exercise) => {
+      const matchesZone = filters.zone === "all" || exercise.zone === filters.zone;
+      const matchesIntensity = filters.intensity === "all" || exercise.intensity === filters.intensity;
+      const matchesSearch = exercise.name.toLowerCase().includes(filters.search.toLowerCase());
+      return matchesZone && matchesIntensity && matchesSearch;
+    });
+  }, [exercises, filters]);
+
+  const totalSeconds = steps.reduce((total, step) => total + step.duration, 0);
+  const trimmedName = name.trim();
+  const normalizedName = trimmedName.toLowerCase();
+  const isDuplicate = programs.some((program) => program.id !== programId && program.name.toLowerCase() === normalizedName);
+  const canSave = steps.length > 0 && trimmedName.length >= 3 && !isDuplicate;
+
+  const upsertStep = (exercise: Exercise) => {
+    addStep({
+      id: newId(),
+      exerciseId: exercise.id,
+      duration: exercise.defaultDuration,
+    });
+  };
+
+  const handleSave = async () => {
+    if (!canSave) {
+      if (!steps.length) {
+        setFeedback(labels.emptyTimeline);
+      } else if (isDuplicate) {
+        setFeedback(labels.duplicate);
+      }
+      return;
+    }
+    const now = new Date().toISOString();
+    const createdAt = programId && editingProgram ? editingProgram.createdAt : now;
+    try {
+      const targetId = programId ?? newId();
+      await persist({
+        id: targetId,
+        name: trimmedName,
+        steps,
+        musicUrl,
+        notes,
+        createdAt,
+        updatedAt: now,
+      });
+      setFeedback(`${labels.success} (${trimmedName})`);
+      if (!programId) {
+        reset();
+      }
+    } catch (error) {
+      console.error(error);
+      setFeedback(labels.error);
+    }
+  };
+
+  const timelineWithDetails = steps.map((step) => ({
+    step,
+    exercise: exercises.find((exercise) => exercise.id === step.exerciseId),
+  }));
+
+  return (
+    <section className="space-y-6">
+      <header className="glass-panel px-6 py-4 text-white">
+        <h1 className="text-2xl font-semibold">{labels.title}</h1>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-white/70">{labels.nameLabel}</span>
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="rounded-xl bg-white/10 px-3 py-2 text-white"
+            />
+            {isDuplicate && <span className="text-xs text-rose-200">{labels.duplicate}</span>}
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-white/70">{labels.musicLabel}</span>
+            <input
+              value={musicUrl}
+              onChange={(event) => setMusicUrl(event.target.value)}
+              className="rounded-xl bg-white/10 px-3 py-2 text-white"
+              placeholder="https://"
+            />
+          </label>
+          <label className="flex flex-col gap-2 text-sm">
+            <span className="text-white/70">{labels.notes}</span>
+            <input
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              className="rounded-xl bg-white/10 px-3 py-2 text-white"
+            />
+          </label>
+        </div>
+      </header>
+      <ExerciseFilters
+        filters={filters}
+        onChange={setFilters}
+        labels={{
+          filters: labels.filters,
+          zone: labels.zone,
+          intensity: labels.intensity,
+          reset: labels.reset,
+          search: labels.search,
+        }}
+      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-4">
+          {filteredExercises.map((exercise) => (
+            <ExerciseCard key={exercise.id} exercise={exercise} onSelect={upsertStep} ctaLabel={labels.add} />
+          ))}
+        </div>
+        <div>
+          <ProgramTimeline
+            items={timelineWithDetails}
+            totalSeconds={totalSeconds}
+            totalLabel={labels.total}
+            emptyLabel={labels.emptyTimeline}
+            durationLabel={labels.duration}
+            onMove={moveStep}
+            onReorder={reorderStep}
+            onRemove={removeStep}
+            onDurationChange={updateDuration}
+          />
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!canSave}
+            className="mt-6 w-full rounded-full bg-white py-3 text-sm font-semibold text-slate-900 focus-ring disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-white/60"
+          >
+            {labels.save}
+          </button>
+          {feedback && (
+            <p className="mt-2 text-sm text-white/80" role="status" aria-live="polite">
+              {feedback}
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}

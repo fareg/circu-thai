@@ -1,0 +1,81 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "programs": "Programmes",
+    "builder": "Assembleur",
+    "run": "Session",
+    "cta": "Commencer"
+  },
+  "hero": {
+    "title": "CircuThai guide vos sequences de drainage",
+    "subtitle": "Assemblez des exercices doux, synchronisez audio, suivez vos progres et gardez le flux lymphatique actif.",
+    "primary": "Composer un programme",
+    "secondary": "Voir les fonctionnalites"
+  },
+  "features": {
+    "catalog": "Catalogue oriente circulation",
+    "catalogBody": "15 exercices valides par des kine avec durées ajustables et conseils ciblant jambes, bras et tronc.",
+    "builder": "Assembleur visuel",
+    "builderBody": "Glissez ajoutez des etapes, verrouillez la somme des durees et prevoyez les pauses.",
+    "guidance": "Coach audio",
+    "guidanceBody": "Annonces vocales, bip precis et previsualisation de l'etape suivante.",
+    "music": "Musique de fond",
+    "musicBody": "Associez des boucles calmes, controlez le volume ou coupez a la demande."
+  },
+  "programs": {
+    "title": "Programmes sauvegardes",
+    "empty": "Aucun programme enregistre pour le moment.",
+    "import": "Importer",
+    "export": "Exporter",
+    "delete": "Supprimer",
+    "run": "Lancer",
+    "edit": "Modifier",
+    "duplicate": "Dupliquer",
+    "copySuffix": " (copie)",
+    "duplicateSuccess": "Copie creee",
+    "duplicateError": "Duplication impossible.",
+    "total": "Total",
+    "sessions": "Sessions terminees"
+  },
+  "builder": {
+    "title": "Assembler une sequence",
+    "nameLabel": "Nom du programme",
+    "musicLabel": "Audio de fond (URL)",
+    "filters": "Filtres",
+    "zone": "Zone",
+    "intensity": "Intensite",
+    "reset": "Reinitialiser",
+    "search": "Recherche",
+    "add": "Ajouter",
+    "save": "Enregistrer",
+    "total": "Somme des durees",
+    "duplicate": "Ce nom existe deja.",
+    "success": "Programme sauvegarde.",
+    "error": "Impossible de sauvegarder.",
+    "duration": "Duree",
+    "notes": "Notes rapides",
+    "emptyTimeline": "Ajoutez des exercices pour voir la chronologie."
+  },
+  "run": {
+    "heading": "Session guidee",
+    "ready": "Pret a lancer",
+    "start": "Demarrer",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "skip": "Passer",
+    "next": "Suivant",
+    "completed": "Session terminee",
+    "log": "Journal des sessions",
+    "music": "Musique de fond",
+    "volume": "Volume",
+    "mute": "Couper",
+    "unmute": "Activer",
+    "missing": "Programme introuvable.",
+    "missingHint": "Choisissez un identifiant valide parmi vos programmes ci-dessous.",
+    "missingEmpty": "Aucun programme sauvegarde. Creez votre premiere sequence via l'assembleur.",
+    "openBuilder": "Ouvrir l'assembleur",
+    "viewPrograms": "Voir les programmes",
+    "elapsed": "Ecoule",
+    "remaining": "Restant"
+  }
+}
