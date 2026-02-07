@@ -21,13 +21,15 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
 NEXT_PUBLIC_FIREBASE_APP_ID
+SEED_TRIGGER_TOKEN
 ```
+> ⚠️ Sans `SEED_TRIGGER_TOKEN`, l'endpoint `/api/seed` répondra `{ "error": "Seed route disabled" }`. Pensez à définir la variable (développement + production) avant de tester l'URL.
 Copier les valeurs fournies par la console Firebase (section Project Settings → SDK setup & config). Répéter pour chaque environnement (Production, Preview, Development) si besoin.
 
 ## 4. Initialiser Firestore
 1. Depuis la console Firebase, créer la base Firestore (mode Production, choisir la région).
 2. Déployer des règles adaptées (lecture/écriture sécurisées). Pour le développement uniquement, des règles ouvertes peuvent être utilisées temporairement.
-3. Localement, exécuter `npm run seed` avec `.env.local` afin de peupler les collections `exercises` et `programs`. Cette commande peut être relancée sans risque : elle n’ajoute que les documents manquants et affiche ce qui a été fait.
+3. Localement, exécuter `npm run seed` avec `.env.local` afin de peupler les collections `exercises` et `programs`. Cette commande peut être relancée sans risque : elle n’ajoute que les documents manquants et affiche ce qui a été fait. En production, la même opération peut être déclenchée via `GET` ou `POST https://<slug>.vercel.app/api/seed?token=$SEED_TRIGGER_TOKEN`.
 4. Vérifier dans la console Firestore que les collections contiennent les programmes attendus (dont `aqua-guided-20`).
 
 ## 5. Lancer le déploiement

@@ -34,6 +34,12 @@ export default async function RunPage({ params }: RunPageProps) {
         missingEmpty: t("missingEmpty"),
         openBuilder: t("openBuilder"),
         viewPrograms: t("viewPrograms"),
+        stepCount: t("stepCount", { current: "{current}", total: "{total}" }),
+        descriptionLabel: t("descriptionLabel"),
+        minuteSingular: t("minuteSingular"),
+        minutePlural: t("minutePlural"),
+        secondSingular: t("secondSingular"),
+        secondPlural: t("secondPlural"),
       }}
     />
   );

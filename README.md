@@ -18,23 +18,32 @@ CircuThai est une application Next.js 15 (App Router) qui aide les praticiens et
 - `npm run lint` : verifie les regles ESLint configurees par Next.
 - `npm run test` : execute les tests Vitest (timer + helpers Firestore) en environnement node.
 - `npm run seed` : injecte le catalogue d'exercices et les programmes par defaut dans Firestore.
+- `GET|POST /api/seed?token=...` : endpoint HTTP protege (via `SEED_TRIGGER_TOKEN`) qui execute le meme seed qu'en local.
 
 ### Tester en local
 1. `npm install`
 2. Creer `.env.local` a la racine du dossier `circu-thai/` avec les cles `NEXT_PUBLIC_FIREBASE_*` fournies par la console Firebase.
+	- Pour activer la route HTTP `/api/seed`, definir egalement `SEED_TRIGGER_TOKEN` (valeur secrete a partager uniquement avec les integrateurs/cron).
 3. `npm run seed` (a executer une fois par environnement pour recreer le catalogue/exemples dans Firestore).
 4. `npm run dev`
 5. Ouvrir http://localhost:3000 (la locale FR charge la navigation, mais l'URL `/en/...` est disponible si besoin).
 6. Les donnees (exercices + programmes + sessions) vivent dans Firestore; utilisez les boutons Import/Export sur `/programs` pour sauvegarder/restaurer.
 
-### Tests
+### Endpoint Seed HTTP
+
+Une fois `SEED_TRIGGER_TOKEN` defini, l'API `GET` ou `POST /api/seed` (en prod ou local) permet de relancer le seed sans acces shell :
 
 ```bash
-npm run test
+curl -X GET "https://votre-app.vercel.app/api/seed?token=$SEED_TRIGGER_TOKEN"
 ```
 
-Vitest se base sur des mocks Firestore en memoire. Les tests couvrent le formatage du timer et les helpers Firestore (export/import/reindexation).
 
+### Wake Lock mobile
+
+Pour que l'ecran des mobiles compatibles reste actif pendant l'execution d'une session, `RunController` s'appuie sur l'API [Screen Wake Lock](https://developer.mozilla.org/en-US/docs/Web/API/Screen_Wake_Lock_API) (Android/Chrome/Edge) et retombe automatiquement sur une reprise apres interaction utilisateur pour iOS/Safari. Aucun reglages supplementaire n'est necessaire : le hook `useWakeLock` demande le verrouillage lorsque la session demarre et le relache lors des pauses/completions.
+
+### Tests
+> ⚠️ Si l'API renvoie `{ "error": "Seed route disabled" }`, cela signifie simplement que `SEED_TRIGGER_TOKEN` n'est pas defini sur l'environnement cible. Ajoutez la variable (meme valeur cote client et serveur), redeployez puis relancez l'URL avec le meme token.
 ### Deploiement Vercel
 
 1. Creer un projet Vercel pointe sur ce repo.

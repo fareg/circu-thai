@@ -15,6 +15,7 @@ export class MusicController {
       loop: true,
       volume: this.volume,
       html5: true,
+      preload: true,
     });
   }
 
@@ -42,5 +43,26 @@ export class MusicController {
 
   getVolume() {
     return this.volume;
+  }
+
+  getPosition() {
+    if (!this.howl) {
+      return 0;
+    }
+    const position = this.howl.seek();
+    return typeof position === "number" ? position : 0;
+  }
+
+  getDuration() {
+    return this.howl?.duration() ?? 0;
+  }
+
+  seek(seconds: number) {
+    if (!this.howl) {
+      return;
+    }
+    const duration = this.howl.duration();
+    const target = Math.min(Math.max(seconds, 0), duration || 0);
+    this.howl.seek(target);
   }
 }

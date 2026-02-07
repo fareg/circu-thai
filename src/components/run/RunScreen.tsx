@@ -25,6 +25,12 @@ interface RunLabels {
   missingEmpty: string;
   openBuilder: string;
   viewPrograms: string;
+  stepCount: string;
+  descriptionLabel: string;
+  minuteSingular: string;
+  minutePlural: string;
+  secondSingular: string;
+  secondPlural: string;
 }
 
 interface RunScreenProps {

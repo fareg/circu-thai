@@ -39,6 +39,13 @@ export default async function LocaleHome() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-100">{tHero("subtitle")}</p>
         <div className="mt-10 flex flex-wrap gap-4">
+          <button
+            type="button"
+            className="focus-ring rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/80"
+            aria-pressed="true"
+          >
+            {tHero("default")}
+          </button>
           <Link
             href="builder"
             className="focus-ring rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg"

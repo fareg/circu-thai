@@ -8,12 +8,16 @@ import { ProgramTimeline } from "@/components/programs/ProgramTimeline";
 import { ProgramStep } from "@/types";
 import { useExercises, useProgramActions, usePrograms } from "@/hooks/usePrograms";
 import { useProgramDraftStore } from "@/store/programDraft";
+import { curatedTracks } from "@/lib/audio/library";
 
 interface BuilderCanvasProps {
   labels: {
     title: string;
     nameLabel: string;
     musicLabel: string;
+    musicPresetLabel: string;
+    musicPresetPlaceholder: string;
+    musicCredit: string;
     notes: string;
     save: string;
     add: string;
@@ -87,6 +91,11 @@ export function BuilderCanvas({ labels, programId }: BuilderCanvasProps) {
     });
   }, [exercises, filters]);
 
+  const presetValue = useMemo(() => {
+    const match = curatedTracks.find((track) => track.url === musicUrl);
+    return match ? match.url : "";
+  }, [musicUrl]);
+
   const totalSeconds = steps.reduce((total, step) => total + step.duration, 0);
   const trimmedName = name.trim();
   const normalizedName = trimmedName.toLowerCase();
@@ -152,15 +161,33 @@ export function BuilderCanvas({ labels, programId }: BuilderCanvasProps) {
             />
             {isDuplicate && <span className="text-xs text-rose-200">{labels.duplicate}</span>}
           </label>
-          <label className="flex flex-col gap-2 text-sm">
-            <span className="text-white/70">{labels.musicLabel}</span>
-            <input
-              value={musicUrl}
-              onChange={(event) => setMusicUrl(event.target.value)}
-              className="rounded-xl bg-white/10 px-3 py-2 text-white"
-              placeholder="https://"
-            />
-          </label>
+          <div className="flex flex-col gap-3 text-sm">
+            <label className="flex flex-col gap-2">
+              <span className="text-white/70">{labels.musicLabel}</span>
+              <input
+                value={musicUrl}
+                onChange={(event) => setMusicUrl(event.target.value)}
+                className="rounded-xl bg-white/10 px-3 py-2 text-white"
+                placeholder="https://"
+              />
+            </label>
+            <label className="flex flex-col gap-2 text-xs">
+              <span className="text-white/60 uppercase tracking-[0.2em]">{labels.musicPresetLabel}</span>
+              <select
+                value={presetValue}
+                onChange={(event) => setMusicUrl(event.target.value)}
+                className="rounded-xl bg-white/10 px-3 py-2 text-white text-sm"
+              >
+                <option value="">{labels.musicPresetPlaceholder}</option>
+                {curatedTracks.map((track) => (
+                  <option key={track.id} value={track.url} className="bg-slate-900 text-white">
+                    {track.label}
+                  </option>
+                ))}
+              </select>
+              <span className="text-[0.7rem] text-white/50">{labels.musicCredit}</span>
+            </label>
+          </div>
           <label className="flex flex-col gap-2 text-sm">
             <span className="text-white/70">{labels.notes}</span>
             <input

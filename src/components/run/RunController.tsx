@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Exercise, ProgramRecord } from "@/types";
 import { createPreciseTimer, formatSeconds, PreciseTimer } from "@/lib/timer";
 import { useAudioController } from "@/hooks/useAudioController";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { MusicPanel } from "./MusicPanel";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/time";
@@ -25,6 +26,12 @@ interface RunControllerProps {
     volume: string;
     mute: string;
     unmute: string;
+    stepCount: string;
+    descriptionLabel: string;
+    minuteSingular: string;
+    minutePlural: string;
+    secondSingular: string;
+    secondPlural: string;
   };
   onCompleted: (durationSeconds: number, interruptCount: number) => Promise<void> | void;
 }
@@ -32,8 +39,18 @@ interface RunControllerProps {
 type RunStatus = "idle" | "running" | "paused" | "completed";
 
 export function RunController({ program, exercises, labels, onCompleted }: RunControllerProps) {
-  const { playInstruction, playBeep, loadMusic, playMusic, pauseMusic, changeVolume, toggleMute, volume, isMuted } =
-    useAudioController();
+  const {
+    playInstruction,
+    stopInstruction,
+    playBeep,
+    loadMusic,
+    playMusic,
+    pauseMusic,
+    changeVolume,
+    toggleMute,
+    volume,
+    isMuted,
+  } = useAudioController();
   const [status, setStatus] = useState<RunStatus>("idle");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [stepElapsed, setStepElapsed] = useState(0);
@@ -42,10 +59,18 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
   const [interrupts, setInterrupts] = useState(0);
   const timerRef = useRef<PreciseTimer | null>(null);
   const delayRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingStartRef = useRef<{ token: number } | null>(null);
+  const pendingPayloadRef = useRef<{ index: number; announce: boolean } | null>(null);
+  const pendingTokenRef = useRef(0);
+  const pendingMusicUnlockRef = useRef(false);
+  const userInteractedRef = useRef(false);
+  const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
+  const autoStartProgramRef = useRef<string | null>(null);
 
   const currentStep = program.steps[currentIndex];
   const nextStep = program.steps[currentIndex + 1];
   const currentExercise = currentStep ? exercises[currentStep.exerciseId] : undefined;
+  const nextExercise = nextStep ? exercises[nextStep.exerciseId] : undefined;
 
   const totalSeconds = useMemo(() => program.steps.reduce((total, step) => total + step.duration, 0), [program.steps]);
   const totalElapsed = completedSeconds + stepElapsed;
@@ -54,27 +79,60 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
     loadMusic(program.musicUrl);
   }, [loadMusic, program.musicUrl]);
 
-  useEffect(() => () => {
-    timerRef.current?.stop();
-    if (delayRef.current) {
-      clearTimeout(delayRef.current);
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      timerRef.current?.stop();
+      clearDelay();
+      stopInstruction();
+    },
+    []
+  );
 
   useEffect(() => {
-    setStatus("idle");
-    setCurrentIndex(0);
-    setCompletedSeconds(0);
-    setStepElapsed(0);
-    setStepRemaining(0);
-    setInterrupts(0);
-  }, [program.id]);
+    const handleUserInteract = () => {
+      userInteractedRef.current = true;
+      if (pendingMusicUnlockRef.current) {
+        pendingMusicUnlockRef.current = false;
+        playMusic();
+      }
+    };
+    window.addEventListener("pointerdown", handleUserInteract);
+    window.addEventListener("keydown", handleUserInteract);
+    return () => {
+      window.removeEventListener("pointerdown", handleUserInteract);
+      window.removeEventListener("keydown", handleUserInteract);
+      void releaseWakeLock();
+    };
+  }, [playMusic, releaseWakeLock]);
+
+  const clearDelay = () => {
+    if (delayRef.current) {
+      clearTimeout(delayRef.current);
+      delayRef.current = null;
+    }
+  };
+
+  const cancelPendingStart = (options?: { keepPayload?: boolean }) => {
+    pendingStartRef.current = null;
+    if (!options?.keepPayload) {
+      pendingPayloadRef.current = null;
+    }
+  };
+
+  const requestMusicPlayback = useCallback(() => {
+    if (userInteractedRef.current) {
+      playMusic();
+      return;
+    }
+    pendingMusicUnlockRef.current = true;
+    playMusic();
+  }, [playMusic]);
 
   const startStep = (index: number, announce = true) => {
     timerRef.current?.stop();
-    if (delayRef.current) {
-      clearTimeout(delayRef.current);
-    }
+    clearDelay();
+    cancelPendingStart();
+    stopInstruction();
     const step = program.steps[index];
     if (!step) {
       finishSession();
@@ -84,75 +142,181 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
     setStepElapsed(0);
     setStepRemaining(durationMs / 1000);
     setCurrentIndex(index);
+
+    const beginStepTimer = () => {
+      pendingPayloadRef.current = null;
+      timerRef.current = createPreciseTimer({
+        durationMs,
+        onTick: (elapsed, remaining) => {
+          setStepElapsed(elapsed / 1000);
+          setStepRemaining(remaining / 1000);
+        },
+        onComplete: () => handleStepComplete(index),
+      });
+      timerRef.current.start();
+      requestMusicPlayback();
+    };
+
     const exercise = exercises[step.exerciseId];
-    if (announce && exercise) {
-      playInstruction(`${exercise.name} ${formatDuration(step.duration)}`);
+    const shouldAnnounce = announce && exercise;
+    if (shouldAnnounce) {
+      const stepPosition = labels.stepCount
+        .replace("{current}", String(index + 1))
+        .replace("{total}", String(program.steps.length));
+      const instructionParts = [
+        `${exercise.name}.`,
+        `${stepPosition}.`,
+        exercise.description,
+        formatSpeechDuration(step.duration, labels),
+      ].filter(Boolean);
+      const instruction = instructionParts.join(" ");
+      const token = ++pendingTokenRef.current;
+      pendingStartRef.current = { token };
+      pendingPayloadRef.current = { index, announce };
+      playInstruction(instruction).then(() => {
+        if (pendingStartRef.current?.token === token) {
+          cancelPendingStart();
+          beginStepTimer();
+        }
+      });
+    } else {
+      beginStepTimer();
     }
-    timerRef.current = createPreciseTimer({
-      durationMs,
-      onTick: (elapsed, remaining) => {
-        setStepElapsed(elapsed / 1000);
-        setStepRemaining(remaining / 1000);
-      },
-      onComplete: handleStepComplete,
-    });
-    timerRef.current.start();
-    playMusic();
     setStatus("running");
+    void requestWakeLock();
   };
 
-  const handleStepComplete = () => {
-    playBeep();
-    setCompletedSeconds((prev) => prev + (currentStep?.duration ?? 0));
-    if (delayRef.current) {
-      clearTimeout(delayRef.current);
+  useEffect(() => {
+    timerRef.current?.stop();
+    clearDelay();
+    cancelPendingStart();
+    pendingPayloadRef.current = null;
+    stopInstruction();
+    pauseMusic();
+    pendingMusicUnlockRef.current = false;
+    void releaseWakeLock();
+    setStatus("idle");
+    setCurrentIndex(0);
+    setCompletedSeconds(0);
+    setStepElapsed(0);
+    setStepRemaining(0);
+    setInterrupts(0);
+    autoStartProgramRef.current = null;
+  }, [pauseMusic, program.id]);
+
+  useEffect(() => {
+    if (autoStartProgramRef.current === program.id) {
+      return;
     }
-    delayRef.current = setTimeout(() => startStep(currentIndex + 1, false), 2000);
+    if (program.steps.length === 0) {
+      return;
+    }
+    const exercisesReady = program.steps.every((step) => Boolean(exercises[step.exerciseId]));
+    if (!exercisesReady) {
+      return;
+    }
+    autoStartProgramRef.current = program.id;
+    startStep(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exercises, program.id, program.steps]);
+
+  const handleStepComplete = (completedIndex: number) => {
+    playBeep();
+    const completedDuration = program.steps[completedIndex]?.duration ?? 0;
+    setCompletedSeconds((prev) => prev + completedDuration);
+    clearDelay();
+    cancelPendingStart();
+    const nextIndex = completedIndex + 1;
+    if (nextIndex >= program.steps.length) {
+      finishSession();
+      return;
+    }
+    const token = ++pendingTokenRef.current;
+    pendingStartRef.current = { token };
+    pendingPayloadRef.current = { index: nextIndex, announce: true };
+    delayRef.current = setTimeout(() => {
+      if (pendingStartRef.current?.token === token) {
+        cancelPendingStart();
+        startStep(nextIndex, true);
+      }
+    }, 2000);
   };
 
   const finishSession = () => {
     timerRef.current?.stop();
+    clearDelay();
+    cancelPendingStart();
+    pendingPayloadRef.current = null;
     pauseMusic();
+    stopInstruction();
+    pendingMusicUnlockRef.current = false;
+    void releaseWakeLock();
+    void playInstruction(labels.completed);
     setStatus("completed");
     void onCompleted(totalSeconds, interrupts);
   };
 
-  const handleStart = () => {
-    setCompletedSeconds(0);
-    setStepElapsed(0);
-    setInterrupts(0);
-    startStep(0);
-  };
-
   const handlePause = () => {
     setStatus("paused");
-    timerRef.current?.pause();
+    if (timerRef.current) {
+      timerRef.current.pause();
+    }
+    const hasPendingPayload = Boolean(pendingPayloadRef.current);
+    if (hasPendingPayload) {
+      cancelPendingStart({ keepPayload: true });
+    } else {
+      cancelPendingStart();
+    }
+    clearDelay();
     pauseMusic();
+    pendingMusicUnlockRef.current = false;
+    stopInstruction();
+    void releaseWakeLock();
     setInterrupts((prev) => prev + 1);
   };
 
   const handleResume = () => {
-    timerRef.current?.resume();
-    setStatus("running");
-    playMusic();
+    if (timerRef.current) {
+      timerRef.current.resume();
+      setStatus("running");
+      playMusic();
+      return;
+    }
+    if (pendingPayloadRef.current) {
+      const { index, announce } = pendingPayloadRef.current;
+      pendingPayloadRef.current = null;
+      startStep(index, announce);
+    }
   };
 
   const handleSkip = () => {
-    setCompletedSeconds((prev) => prev + (currentStep?.duration ?? 0));
-    startStep(currentIndex + 1);
+    const completedDuration = currentStep?.duration ?? 0;
+    setCompletedSeconds((prev) => prev + completedDuration);
+    startStep(currentIndex + 1, true);
   };
 
   const progress = currentStep ? Math.min(1, stepElapsed / currentStep.duration) : 0;
 
   return (
     <section className="glass-panel px-6 py-6 text-white">
-      <header className="flex items-center justify-between">
-        <div>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
           <p className="text-xs uppercase tracking-[0.3em] text-white/50">{labels.ready}</p>
-          <h2 className="text-2xl font-semibold">{program.name}</h2>
-          {currentExercise && <p className="text-sm text-white/70">{currentExercise.name}</p>}
+          <h2 className="text-2xl font-semibold break-words">{program.name}</h2>
+          {currentExercise && (
+            <div className="space-y-1">
+              <p className="text-sm text-white/70 break-words">
+                {currentExercise.name} ({currentIndex + 1} / {program.steps.length})
+              </p>
+              {currentExercise.description && (
+                <p className="text-sm text-white/60 break-words">
+                  {labels.descriptionLabel}: {currentExercise.description}
+                </p>
+              )}
+            </div>
+          )}
         </div>
-        <div className="text-right text-sm text-white/70">
+        <div className="text-left text-sm text-white/70 sm:text-right">
           <p>
             {labels.elapsed}: {formatSeconds(totalElapsed)}
           </p>
@@ -161,8 +325,8 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
           </p>
         </div>
       </header>
-      <div className="mt-8 flex flex-col items-center gap-8 lg:flex-row">
-        <div className="flex flex-col items-center gap-4">
+      <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
+        <div className="flex w-full flex-col items-center gap-4 lg:w-auto">
           <svg className="ring-progress" viewBox="0 0 120 120" role="img" aria-label="Progression">
             <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.2)" strokeWidth="8" fill="transparent" />
             <circle
@@ -187,9 +351,6 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
             </text>
           </svg>
           <div className="flex gap-3">
-            {status === "idle" && (
-              <Button onClick={handleStart}>{labels.start}</Button>
-            )}
             {status === "running" && (
               <Button onClick={handlePause}>{labels.pause}</Button>
             )}
@@ -203,29 +364,34 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
             )}
           </div>
         </div>
-        <div className="flex-1 space-y-4">
-          <div className="rounded-2xl bg-white/5 p-4">
+        <div className="w-full flex-1 space-y-4">
+          <div className="rounded-2xl bg-white/5 p-4 break-words">
             <p className="text-xs uppercase tracking-[0.3em] text-white/50">{labels.next}</p>
             {nextStep ? (
-              <div>
-                <p className="text-lg font-semibold">{exercises[nextStep.exerciseId]?.name ?? nextStep.exerciseId}</p>
+              <div className="space-y-1">
+                <p className="text-lg font-semibold break-words">{nextExercise?.name ?? nextStep.exerciseId}</p>
                 <p className="text-sm text-white/70">{formatDuration(nextStep.duration)}</p>
+                {nextExercise?.description && (
+                  <p className="text-xs text-white/60 break-words">{nextExercise.description}</p>
+                )}
               </div>
             ) : (
               <p className="text-sm text-white/70">{labels.completed}</p>
             )}
           </div>
-          <MusicPanel
-            label={labels.music}
-            volumeLabel={labels.volume}
-            muteLabel={labels.mute}
-            unmuteLabel={labels.unmute}
-            volume={volume}
-            isMuted={isMuted}
-            onVolume={changeVolume}
-            onToggleMute={toggleMute}
-            musicUrl={program.musicUrl}
-          />
+          <div className="w-full">
+            <MusicPanel
+              label={labels.music}
+              volumeLabel={labels.volume}
+              muteLabel={labels.mute}
+              unmuteLabel={labels.unmute}
+              volume={volume}
+              isMuted={isMuted}
+              onVolume={changeVolume}
+              onToggleMute={toggleMute}
+              musicUrl={program.musicUrl}
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -246,3 +412,23 @@ function Button({ children, onClick, variant = "solid" }: { children: React.Reac
     </button>
   );
 }
+
+function formatSpeechDuration(seconds: number, labels: RunControllerProps["labels"]) {
+  if (!Number.isFinite(seconds)) {
+    return `0 ${labels.secondPlural}`;
+  }
+  const safe = Math.max(0, Math.round(seconds));
+  const minutes = Math.floor(safe / 60);
+  const remainder = safe % 60;
+  const parts: string[] = [];
+  if (minutes > 0) {
+    const unit = minutes === 1 ? labels.minuteSingular : labels.minutePlural;
+    parts.push(`${minutes} ${unit}`);
+  }
+  if (remainder > 0 || parts.length === 0) {
+    const unit = remainder === 1 ? labels.secondSingular : labels.secondPlural;
+    parts.push(`${remainder} ${unit}`);
+  }
+  return parts.join(" ");
+}
+

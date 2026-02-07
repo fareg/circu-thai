@@ -28,14 +28,28 @@ export async function playBeep(volume = 0.4) {
 
 export function speakInstruction(text: string) {
   if (typeof window === "undefined") {
+    return Promise.resolve();
+  }
+  if (!("speechSynthesis" in window)) {
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onend = () => resolve();
+    utterance.onerror = () => resolve();
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  });
+}
+
+export function stopInstructions() {
+  if (typeof window === "undefined") {
     return;
   }
   if (!("speechSynthesis" in window)) {
     return;
   }
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = 1;
-  utterance.pitch = 1;
   window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
 }

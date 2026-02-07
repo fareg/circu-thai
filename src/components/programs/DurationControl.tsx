@@ -13,8 +13,8 @@ interface DurationControlProps {
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
-export function DurationControl({ value, onChange, label, min = 30, max = 600, step = 15 }: DurationControlProps) {
-  const normalizedStep = step <= 0 ? 15 : step;
+export function DurationControl({ value, onChange, label, min = 10, max = 600, step = 10 }: DurationControlProps) {
+  const normalizedStep = step <= 0 ? 10 : step;
 
   const snapToStep = (next: number) => {
     const clamped = clamp(next, min, max);
@@ -38,7 +38,7 @@ export function DurationControl({ value, onChange, label, min = 30, max = 600, s
           className="rounded-full bg-white/10 px-3 py-2 text-base text-white/80 disabled:opacity-40"
           disabled={value <= min}
         >
-          -15s
+          -{normalizedStep}s
         </button>
         <input
           type="range"
@@ -57,7 +57,7 @@ export function DurationControl({ value, onChange, label, min = 30, max = 600, s
           className="rounded-full bg-white/10 px-3 py-2 text-base text-white/80 disabled:opacity-40"
           disabled={value >= max}
         >
-          +15s
+          +{normalizedStep}s
         </button>
       </div>
       <span className="text-sm text-white">{formatDuration(value)}</span>

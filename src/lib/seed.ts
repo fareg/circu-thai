@@ -1,11 +1,13 @@
 import { exerciseCatalog } from "@/data/exercises";
+import { curatedTracks } from "@/lib/audio/library";
 import type { ProgramRecord, ProgramStep } from "@/types";
 import { collection, doc, getDocs, setDoc } from "firebase/firestore";
 import { firestore } from "@/lib/firebase";
 
 const EXERCISES_COLLECTION = "exercises";
 const PROGRAMS_COLLECTION = "programs";
-const defaultMusic = "https://cdn.pixabay.com/download/audio/2022/03/15/audio_demo.mp3";
+const fallbackTrack = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+const pickTrack = (index: number) => curatedTracks[index % curatedTracks.length]?.url ?? fallbackTrack;
 const defaultTimestamp = "2024-01-05T08:00:00.000Z";
 
 const makeStep = (programId: string, exerciseId: string, duration: number, index: number): ProgramStep => ({
@@ -19,7 +21,7 @@ export const defaultPrograms: ProgramRecord[] = [
     id: "drainage-matinal",
     name: "Drainage matinal 15'",
     notes: "Sequence express pour relancer le retour veineux des membres inferieurs.",
-    musicUrl: defaultMusic,
+    musicUrl: pickTrack(0),
     createdAt: defaultTimestamp,
     updatedAt: defaultTimestamp,
     steps: [
@@ -34,7 +36,7 @@ export const defaultPrograms: ProgramRecord[] = [
     id: "upper-release",
     name: "Decongestion haut du corps",
     notes: "Mobilisation douce des membres superieurs + respiration.",
-    musicUrl: defaultMusic,
+    musicUrl: pickTrack(1),
     createdAt: defaultTimestamp,
     updatedAt: defaultTimestamp,
     steps: [
@@ -49,7 +51,7 @@ export const defaultPrograms: ProgramRecord[] = [
     id: "aqua-fluide",
     name: "Routine aqua fluide",
     notes: "Enchainement dans l'eau pour drainage global.",
-    musicUrl: defaultMusic,
+    musicUrl: pickTrack(2),
     createdAt: defaultTimestamp,
     updatedAt: defaultTimestamp,
     steps: [
@@ -64,7 +66,7 @@ export const defaultPrograms: ProgramRecord[] = [
     id: "aqua-guided-20",
     name: "Séance guidée piscine 20 min",
     notes: "Cours progressif dans l'eau pour relancer circulation + drainage.",
-    musicUrl: defaultMusic,
+    musicUrl: pickTrack(3),
     createdAt: defaultTimestamp,
     updatedAt: defaultTimestamp,
     steps: [
@@ -106,13 +108,27 @@ async function seedPrograms() {
   const existingIds = new Set(snapshot.docs.map((docSnap) => docSnap.id));
   const missingPrograms = defaultPrograms.filter((program) => !existingIds.has(program.id));
   if (!missingPrograms.length) {
-    console.log("Programs already present (", existingIds.size, ") — skipping seed.");
-    return;
+    console.log("Programs already present (", existingIds.size, ") — refreshing music tracks.");
+  } else {
+    await Promise.all(
+      missingPrograms.map((program) => setDoc(doc(firestore, PROGRAMS_COLLECTION, program.id), program))
+    );
+    console.log(`Seeded ${missingPrograms.length} program(s) into Firestore.`);
   }
-  await Promise.all(
-    missingPrograms.map((program) => setDoc(doc(firestore, PROGRAMS_COLLECTION, program.id), program))
+
+  await syncDefaultProgramMusic();
+}
+
+async function syncDefaultProgramMusic() {
+  const updates = defaultPrograms.map((program) =>
+    setDoc(
+      doc(firestore, PROGRAMS_COLLECTION, program.id),
+      { musicUrl: program.musicUrl },
+      { merge: true }
+    )
   );
-  console.log(`Seeded ${missingPrograms.length} program(s) into Firestore.`);
+  await Promise.all(updates);
+  console.log(`Synchronized musicUrl on ${updates.length} default program(s).`);
 }
 
 export async function seedDefaultContent() {

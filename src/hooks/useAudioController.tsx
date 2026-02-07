@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { playBeep, speakInstruction } from "@/lib/audio/cues";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { playBeep, speakInstruction, stopInstructions } from "@/lib/audio/cues";
 import { MusicController } from "@/lib/audio/music";
 
 export function useAudioController() {
@@ -15,14 +15,30 @@ export function useAudioController() {
 
   useEffect(() => () => music.halt(), [music]);
 
+  const playInstructionSafe = useCallback((text: string) => speakInstruction(text), []);
+  const stopInstructionSafe = useCallback(() => stopInstructions(), []);
+  const playBeepSafe = useCallback(() => playBeep(isMuted ? 0 : volume), [isMuted, volume]);
+  const loadMusic = useCallback((src?: string) => music.load(src), [music]);
+  const playMusic = useCallback(() => music.play(), [music]);
+  const pauseMusic = useCallback(() => music.pause(), [music]);
+  const seekMusic = useCallback((seconds: number) => music.seek(seconds), [music]);
+  const getMusicPosition = useCallback(() => music.getPosition(), [music]);
+  const getMusicDuration = useCallback(() => music.getDuration(), [music]);
+  const changeVolume = useCallback((next: number) => setVolumeState(next), []);
+  const toggleMute = useCallback(() => setIsMuted((prev) => !prev), []);
+
   return {
-    playInstruction: (text: string) => speakInstruction(text),
-    playBeep: () => playBeep(isMuted ? 0 : volume),
-    loadMusic: (src?: string) => music.load(src),
-    playMusic: () => music.play(),
-    pauseMusic: () => music.pause(),
-    changeVolume: (next: number) => setVolumeState(next),
-    toggleMute: () => setIsMuted((prev) => !prev),
+    playInstruction: playInstructionSafe,
+    stopInstruction: stopInstructionSafe,
+    playBeep: playBeepSafe,
+    loadMusic,
+    playMusic,
+    pauseMusic,
+    seekMusic,
+    getMusicPosition,
+    getMusicDuration,
+    changeVolume,
+    toggleMute,
     volume,
     isMuted,
   };
