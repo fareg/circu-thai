@@ -46,6 +46,8 @@ interface RunScreenProps {
   runBaseHref: string;
   homeHref: string;
   homeLabel: string;
+  versionLabel: string;
+  version: string;
 }
 
 export function RunScreen({
@@ -58,6 +60,8 @@ export function RunScreen({
   runBaseHref,
   homeHref,
   homeLabel,
+  versionLabel,
+  version,
 }: RunScreenProps) {
   const program = useProgram(programId);
   const exercises = useExercises();
@@ -130,6 +134,8 @@ export function RunScreen({
         onCompleted={handleCompleted}
         homeHref={homeHref}
         homeLabel={homeLabel}
+        versionLabel={versionLabel}
+        version={version}
       />
       <SessionLog title={logLabel} sessions={sessions} />
     </div>

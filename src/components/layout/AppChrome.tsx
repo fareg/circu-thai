@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
+import { appVersion } from "@/lib/version";
 import { ReactNode } from "react";
 
 interface AppChromeProps {
@@ -42,6 +43,10 @@ export function AppChrome({ children, locale }: AppChromeProps) {
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-slate-200">CircuThai</p>
             <p className="text-lg font-semibold text-gradient">Flow, breathe, repeat</p>
+            <p className="text-xs text-slate-400">
+              {t("version")}
+              <span className="ml-1 font-semibold text-slate-200">{appVersion}</span>
+            </p>
           </div>
           <nav className="flex flex-1 flex-wrap gap-3 text-sm">
             {navItems.map((item) => {

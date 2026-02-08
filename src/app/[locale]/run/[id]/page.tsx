@@ -1,4 +1,5 @@
 import { RunScreen } from "@/components/run/RunScreen";
+import { appVersion } from "@/lib/version";
 import { getTranslations } from "next-intl/server";
 
 interface RunPageProps {
@@ -18,6 +19,8 @@ export default async function RunPage({ params }: RunPageProps) {
       runBaseHref={`${localePrefix}/run`}
       homeHref={localePrefix}
       homeLabel={tNav("home")}
+      version={appVersion}
+      versionLabel={tNav("version")}
       labels={{
         ready: tRun("ready"),
         start: tRun("start"),

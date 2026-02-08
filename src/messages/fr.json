@@ -3,8 +3,9 @@
     "home": "Accueil",
     "programs": "Programmes",
     "builder": "Assembleur",
-    "run": "Session",
-    "soundTest": "Test son"
+    "run": "Y aller",
+    "soundTest": "Test son",
+    "version": "Version"
   },
   "hero": {
     "title": "CircuThai guide vos séquences de drainage",

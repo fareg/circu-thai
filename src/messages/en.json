@@ -4,7 +4,8 @@
     "programs": "Programs",
     "builder": "Builder",
     "run": "Run",
-    "soundTest": "Sound Test"
+    "soundTest": "Sound Test",
+    "version": "Version"
   },
   "hero": {
     "title": "CircuThai sequences for gentle drainage",
