@@ -26,6 +26,7 @@ interface RunControllerProps {
     ready: string;
     elapsed: string;
     remaining: string;
+    summaryHeading: string;
     music: string;
     volume: string;
     mute: string;
