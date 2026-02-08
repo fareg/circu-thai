@@ -15,3 +15,8 @@
 - **Version affichée** : le bandeau principal (et les pages programmes) indiquent désormais clairement la version de l’app pour que vous sachiez instantanément sur quelle build vous êtes.
 - **Builder enrichi** : bouton « Enregistrer » dans l’entête et indication « Dernière mise à jour » lorsque vous éditez un programme existant.
 - **Traductions polies** : tous les libellés français utilisent maintenant les accents corrects, notamment pour les exercices et la navigation.
+- **Audio solide** : le bip de fin d’étape et le slider de volume sont fiabilisés (même après une mise en pause du navigateur).
+
+## v0.2.1 — 8 février 2026
+- **Audio robuste** : reprise automatique du moteur audio pour garantir le bip de fin d’exercice, même si le navigateur suspend l’audio.
+- **Slider 0 → 100 %** : l’ajustement du volume répond mieux sur mobile grâce à une échelle plus claire et plus précise.

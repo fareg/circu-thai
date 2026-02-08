@@ -12,3 +12,7 @@
 - Builder : bouton « Enregistrer » dans l’en-tête, indicateur « Dernière mise à jour » et affichage des versions/localisations corrigées.
 - Navigation : bandeau masqué pendant l’exécution pour maximiser la zone utile, ajout d’un badge de version dans l’UI et du lien « Accueil » contextualisé.
 - Localisation : toutes les traductions françaises (y compris les exercices) utilisent désormais les accents corrects.
+
+## v0.2.1 — 2026-02-08
+- Audio : reprise automatique du contexte Web Audio avant chaque bip pour éviter les silences sur certains navigateurs mobiles.
+- Slider de volume : plage 0 → 100 % avec reconversion interne (0 → 1) pour une précision accrue et une meilleure compatibilité touch.

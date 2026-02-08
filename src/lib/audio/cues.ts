@@ -15,6 +15,14 @@ export async function playBeep(volume = 0.4) {
   if (!ctx) {
     return;
   }
+  if (ctx.state === "suspended") {
+    try {
+      await ctx.resume();
+    } catch (error) {
+      console.warn("Unable to resume audio context for beep", error);
+      return;
+    }
+  }
   const oscillator = ctx.createOscillator();
   const gain = ctx.createGain();
   oscillator.type = "triangle";

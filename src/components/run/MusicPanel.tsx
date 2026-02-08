@@ -54,10 +54,10 @@ export function MusicPanel({
           <input
             type="range"
             min={0}
-            max={1}
-            step={0.05}
-            value={volume}
-            onChange={(event) => onVolume(Number(event.target.value))}
+            max={100}
+            step={5}
+            value={Math.round(volume * 100)}
+            onChange={(event) => onVolume(Number(event.target.value) / 100)}
             className="mx-auto w-[calc(100%-20px)] max-w-full accent-emerald-300"
           />
         </div>
