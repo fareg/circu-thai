@@ -42,8 +42,6 @@ interface RunControllerProps {
   onCompleted: (durationSeconds: number, interruptCount: number) => Promise<void> | void;
   homeHref?: string;
   homeLabel?: string;
-  versionLabel?: string;
-  version?: string;
 }
 
 type RunStatus = "idle" | "running" | "paused" | "completed";
@@ -55,8 +53,6 @@ export function RunController({
   onCompleted,
   homeHref,
   homeLabel,
-  versionLabel,
-  version,
 }: RunControllerProps) {
   const {
     playInstruction,
@@ -381,11 +377,6 @@ export function RunController({
         <div className="space-y-1">
           <div className="flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-white/50">
             <span>{labels.ready}</span>
-            {version && (
-              <span className="text-white/60">
-                {versionLabel ? `${versionLabel} ${version}` : version}
-              </span>
-            )}
           </div>
           <h2 className="text-2xl font-semibold break-words">{program.name}</h2>
           {currentExercise && (
