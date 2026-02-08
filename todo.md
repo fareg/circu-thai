@@ -4,7 +4,8 @@
 [X] comment faire en sorte de laisser le mobile "actif" pdenant f'execution d'un programme aue le mobile ne se "lock" pas
 [X] Ajouter une route pour l'execution du "seed"
 [X] Indiquer avec un audio quand la session est terminée avec arret de la musique
-* [ ] Supprimer le bouton "commencer"
+* [X] Supprimer le bouton "commencer"
+* [X] Supprimer le lancement automatique
 
 ## Corrections
 [ ] 

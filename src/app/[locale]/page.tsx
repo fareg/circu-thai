@@ -1,8 +1,17 @@
 import Link from "next/link";
 import { ArrowRight, Music2, TimerReset, Waves } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { defaultLocale } from "@/i18n/config";
 
-export default async function LocaleHome() {
+interface LocaleHomeProps {
+  params: Promise<{
+    locale?: string;
+  }>;
+}
+
+export default async function LocaleHome({ params }: LocaleHomeProps) {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale || defaultLocale;
   const tHero = await getTranslations("hero");
   const tFeatures = await getTranslations("features");
 
@@ -39,21 +48,20 @@ export default async function LocaleHome() {
         </h1>
         <p className="mt-4 max-w-2xl text-lg text-slate-100">{tHero("subtitle")}</p>
         <div className="mt-10 flex flex-wrap gap-4">
-          <button
-            type="button"
-            className="focus-ring rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/80"
-            aria-pressed="true"
+          <Link
+            href={`/${locale}/programs`}
+            className="focus-ring rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg"
           >
             {tHero("default")}
-          </button>
+          </Link>
           <Link
-            href="builder"
-            className="focus-ring rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg"
+            href={`/${locale}/builder`}
+            className="focus-ring rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white/80"
           >
             {tHero("primary")}
           </Link>
           <Link
-            href="programs"
+            href={`/${locale}/programs`}
             className="focus-ring rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white/90"
           >
             {tHero("secondary")}

@@ -94,7 +94,7 @@ export const exerciseCatalog: Exercise[] = [
   },
   {
     id: "shoulder-sweeps",
-    name: "Balayages d'epaules",
+    name: "Balayages d'épaules",
     description: "Faites glisser les omoplates vers le bas puis ouvrez la cage thoracique.",
     tags: ["upper", "posture"],
     zone: "arms",
@@ -212,7 +212,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "water-relax-walk",
     name: "Marche lente relaxante",
-    description: "Marche tranquille dans l'eau respiration profonde epaules relachees.",
+    description: "Marche tranquille dans l'eau respiration profonde épaules relâchées.",
     tags: ["cooldown", "water", "breath"],
     zone: "full",
     intensity: "low",

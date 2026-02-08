@@ -20,7 +20,13 @@ export class MusicController {
   }
 
   play() {
-    this.howl?.play();
+    if (!this.howl) {
+      return;
+    }
+    if (this.howl.playing()) {
+      return;
+    }
+    this.howl.play();
   }
 
   pause() {

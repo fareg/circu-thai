@@ -4,13 +4,12 @@
     "programs": "Programs",
     "builder": "Builder",
     "run": "Run",
-    "soundTest": "Sound Test",
-    "cta": "Get Started"
+    "soundTest": "Sound Test"
   },
   "hero": {
     "title": "CircuThai sequences for gentle drainage",
     "subtitle": "Stack circulation friendly moves, sync cues and audio, and stay consistent with daily flows.",
-    "default": "Use default",
+    "default": "Start a program",
     "primary": "Build a program",
     "secondary": "Explore features"
   },
@@ -59,6 +58,7 @@
     "error": "Unable to save program.",
     "duration": "Duration",
     "notes": "Quick notes",
+    "lastUpdate": "Last update",
     "emptyTimeline": "Add exercises to see the timeline."
   },
   "run": {
@@ -68,9 +68,12 @@
     "pause": "Pause",
     "resume": "Resume",
     "skip": "Skip",
+    "previous": "Previous",
+    "restart": "Restart",
     "next": "Next",
     "completed": "Session complete",
     "log": "Session log",
+    "summaryHeading": "Programme overview",
     "music": "Background music",
     "volume": "Volume",
     "mute": "Mute",

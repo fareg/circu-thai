@@ -6,40 +6,45 @@ interface RunPageProps {
 }
 
 export default async function RunPage({ params }: RunPageProps) {
-  const [{ id, locale }, t] = await Promise.all([params, getTranslations("run")]);
+  const [{ id, locale }, tRun, tNav] = await Promise.all([params, getTranslations("run"), getTranslations("nav")]);
   const localePrefix = `/${locale}`;
   return (
     <RunScreen
       programId={id}
-      logLabel={t("log")}
-      missingLabel={t("missing")}
+      logLabel={tRun("log")}
+      missingLabel={tRun("missing")}
       builderHref={`${localePrefix}/builder`}
       programsHref={`${localePrefix}/programs`}
       runBaseHref={`${localePrefix}/run`}
+      homeHref={localePrefix}
+      homeLabel={tNav("home")}
       labels={{
-        ready: t("ready"),
-        start: t("start"),
-        pause: t("pause"),
-        resume: t("resume"),
-        skip: t("skip"),
-        next: t("next"),
-        completed: t("completed"),
-        elapsed: t("elapsed"),
-        remaining: t("remaining"),
-        music: t("music"),
-        volume: t("volume"),
-        mute: t("mute"),
-        unmute: t("unmute"),
-        missingHint: t("missingHint"),
-        missingEmpty: t("missingEmpty"),
-        openBuilder: t("openBuilder"),
-        viewPrograms: t("viewPrograms"),
-        stepCount: t("stepCount", { current: "{current}", total: "{total}" }),
-        descriptionLabel: t("descriptionLabel"),
-        minuteSingular: t("minuteSingular"),
-        minutePlural: t("minutePlural"),
-        secondSingular: t("secondSingular"),
-        secondPlural: t("secondPlural"),
+        ready: tRun("ready"),
+        start: tRun("start"),
+        pause: tRun("pause"),
+        resume: tRun("resume"),
+        skip: tRun("skip"),
+        previous: tRun("previous"),
+        restart: tRun("restart"),
+        next: tRun("next"),
+        completed: tRun("completed"),
+        elapsed: tRun("elapsed"),
+        remaining: tRun("remaining"),
+        summaryHeading: tRun("summaryHeading"),
+        music: tRun("music"),
+        volume: tRun("volume"),
+        mute: tRun("mute"),
+        unmute: tRun("unmute"),
+        missingHint: tRun("missingHint"),
+        missingEmpty: tRun("missingEmpty"),
+        openBuilder: tRun("openBuilder"),
+        viewPrograms: tRun("viewPrograms"),
+        stepCount: tRun("stepCount", { current: "{current}", total: "{total}" }),
+        descriptionLabel: tRun("descriptionLabel"),
+        minuteSingular: tRun("minuteSingular"),
+        minutePlural: tRun("minutePlural"),
+        secondSingular: tRun("secondSingular"),
+        secondPlural: tRun("secondPlural"),
       }}
     />
   );

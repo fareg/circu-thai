@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Exercise, ProgramRecord } from "@/types";
 import { createPreciseTimer, formatSeconds, PreciseTimer } from "@/lib/timer";
@@ -8,6 +9,7 @@ import { useWakeLock } from "@/hooks/useWakeLock";
 import { MusicPanel } from "./MusicPanel";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/time";
+import { ArrowLeft } from "lucide-react";
 
 interface RunControllerProps {
   program: ProgramRecord;
@@ -17,6 +19,8 @@ interface RunControllerProps {
     pause: string;
     resume: string;
     skip: string;
+    previous: string;
+    restart: string;
     next: string;
     completed: string;
     ready: string;
@@ -34,11 +38,13 @@ interface RunControllerProps {
     secondPlural: string;
   };
   onCompleted: (durationSeconds: number, interruptCount: number) => Promise<void> | void;
+  homeHref?: string;
+  homeLabel?: string;
 }
 
 type RunStatus = "idle" | "running" | "paused" | "completed";
 
-export function RunController({ program, exercises, labels, onCompleted }: RunControllerProps) {
+export function RunController({ program, exercises, labels, onCompleted, homeHref, homeLabel }: RunControllerProps) {
   const {
     playInstruction,
     stopInstruction,
@@ -65,12 +71,25 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
   const pendingMusicUnlockRef = useRef(false);
   const userInteractedRef = useRef(false);
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
-  const autoStartProgramRef = useRef<string | null>(null);
 
   const currentStep = program.steps[currentIndex];
   const nextStep = program.steps[currentIndex + 1];
   const currentExercise = currentStep ? exercises[currentStep.exerciseId] : undefined;
   const nextExercise = nextStep ? exercises[nextStep.exerciseId] : undefined;
+  const exercisesReady = useMemo(() => {
+    if (program.steps.length === 0) {
+      return false;
+    }
+    return program.steps.every((step) => Boolean(exercises[step.exerciseId]));
+  }, [exercises, program.steps]);
+  const summaryItems = useMemo(() => {
+    return program.steps.map((step, index) => ({
+      id: step.id,
+      title: exercises[step.exerciseId]?.name ?? step.exerciseId,
+      duration: step.duration,
+      index,
+    }));
+  }, [exercises, program.steps]);
 
   const totalSeconds = useMemo(() => program.steps.reduce((total, step) => total + step.duration, 0), [program.steps]);
   const totalElapsed = completedSeconds + stepElapsed;
@@ -201,24 +220,14 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
     setStepElapsed(0);
     setStepRemaining(0);
     setInterrupts(0);
-    autoStartProgramRef.current = null;
   }, [pauseMusic, program.id]);
 
-  useEffect(() => {
-    if (autoStartProgramRef.current === program.id) {
-      return;
-    }
-    if (program.steps.length === 0) {
-      return;
-    }
-    const exercisesReady = program.steps.every((step) => Boolean(exercises[step.exerciseId]));
+  const handleStart = () => {
     if (!exercisesReady) {
       return;
     }
-    autoStartProgramRef.current = program.id;
     startStep(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exercises, program.id, program.steps]);
+  };
 
   const handleStepComplete = (completedIndex: number) => {
     playBeep();
@@ -295,11 +304,37 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
     startStep(currentIndex + 1, true);
   };
 
+  const handlePrevious = () => {
+    if (currentIndex === 0) {
+      startStep(0, true);
+      return;
+    }
+    const previousDuration = program.steps[currentIndex - 1]?.duration ?? 0;
+    setCompletedSeconds((prev) => Math.max(0, prev - previousDuration));
+    startStep(currentIndex - 1, true);
+  };
+
+  const handleRestart = () => {
+    if (!currentStep) {
+      return;
+    }
+    startStep(currentIndex, true);
+  };
+
   const progress = currentStep ? Math.min(1, stepElapsed / currentStep.duration) : 0;
 
   return (
     <section className="glass-panel px-6 py-6 text-white">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <header className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {homeHref && (
+          <Link
+            href={homeHref}
+            className="absolute right-0 top-0 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white focus-ring"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            {homeLabel ?? "Home"}
+          </Link>
+        )}
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-[0.3em] text-white/50">{labels.ready}</p>
           <h2 className="text-2xl font-semibold break-words">{program.name}</h2>
@@ -316,7 +351,7 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
             </div>
           )}
         </div>
-        <div className="text-left text-sm text-white/70 sm:text-right">
+        <div className="flex flex-col items-start gap-3 text-left text-sm text-white/70 sm:items-end sm:text-right">
           <p>
             {labels.elapsed}: {formatSeconds(totalElapsed)}
           </p>
@@ -325,6 +360,21 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
           </p>
         </div>
       </header>
+      {summaryItems.length > 0 && (
+        <div className="mt-6 rounded-2xl bg-white/5 p-4">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/60">{labels.summaryHeading}</p>
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
+            {summaryItems.map((item) => (
+              <li key={item.id} className="flex items-center justify-between gap-4">
+                <span className="font-medium text-white">
+                  {item.index + 1}. {item.title}
+                </span>
+                <span className="text-white/70">{formatDuration(item.duration)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
         <div className="flex w-full flex-col items-center gap-4 lg:w-auto">
           <svg className="ring-progress" viewBox="0 0 120 120" role="img" aria-label="Progression">
@@ -350,12 +400,31 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
               {formatSeconds(Math.max(stepRemaining, 0))}
             </text>
           </svg>
-          <div className="flex gap-3">
+          <div className="flex w-full flex-wrap justify-center gap-3 sm:justify-start">
+            {(status === "idle" || status === "completed") && (
+              <Button onClick={handleStart} disabled={!exercisesReady}>
+                {labels.start}
+              </Button>
+            )}
             {status === "running" && (
               <Button onClick={handlePause}>{labels.pause}</Button>
             )}
             {status === "paused" && (
               <Button onClick={handleResume}>{labels.resume}</Button>
+            )}
+            {(status === "running" || status === "paused") && (
+              <Button onClick={handlePrevious} variant="ghost" disabled={currentIndex === 0}>
+                {labels.previous}
+              </Button>
+            )}
+            {(status === "running" || status === "paused") && (
+              <Button
+                onClick={handleRestart}
+                variant="ghost"
+                disabled={stepElapsed === 0 || !currentStep}
+              >
+                {labels.restart}
+              </Button>
             )}
             {(status === "running" || status === "paused") && (
               <Button onClick={handleSkip} variant="ghost">
@@ -398,14 +467,26 @@ export function RunController({ program, exercises, labels, onCompleted }: RunCo
   );
 }
 
-function Button({ children, onClick, variant = "solid" }: { children: React.ReactNode; onClick: () => void; variant?: "solid" | "ghost" }) {
+function Button({
+  children,
+  onClick,
+  variant = "solid",
+  disabled = false,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  variant?: "solid" | "ghost";
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={cn(
-        "rounded-full px-5 py-2 text-sm font-semibold focus-ring",
-        variant === "solid" ? "bg-white text-slate-900" : "border border-white/40 text-white"
+        "rounded-full px-5 py-2 text-sm font-semibold focus-ring text-center min-w-[130px]",
+        variant === "solid" ? "bg-white text-slate-900" : "border border-white/40 text-white",
+        disabled && "cursor-not-allowed opacity-40"
       )}
     >
       {children}

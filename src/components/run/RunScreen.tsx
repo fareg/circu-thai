@@ -12,11 +12,14 @@ interface RunLabels {
   pause: string;
   resume: string;
   skip: string;
+  previous: string;
+  restart: string;
   next: string;
   completed: string;
   ready: string;
   elapsed: string;
   remaining: string;
+  summaryHeading: string;
   music: string;
   volume: string;
   mute: string;
@@ -41,9 +44,21 @@ interface RunScreenProps {
   builderHref: string;
   programsHref: string;
   runBaseHref: string;
+  homeHref: string;
+  homeLabel: string;
 }
 
-export function RunScreen({ programId, labels, missingLabel, logLabel, builderHref, programsHref, runBaseHref }: RunScreenProps) {
+export function RunScreen({
+  programId,
+  labels,
+  missingLabel,
+  logLabel,
+  builderHref,
+  programsHref,
+  runBaseHref,
+  homeHref,
+  homeLabel,
+}: RunScreenProps) {
   const program = useProgram(programId);
   const exercises = useExercises();
   const programs = usePrograms() ?? [];
@@ -108,7 +123,14 @@ export function RunScreen({ programId, labels, missingLabel, logLabel, builderHr
 
   return (
     <div className="space-y-6">
-      <RunController program={program} exercises={exerciseMap} labels={labels} onCompleted={handleCompleted} />
+      <RunController
+        program={program}
+        exercises={exerciseMap}
+        labels={labels}
+        onCompleted={handleCompleted}
+        homeHref={homeHref}
+        homeLabel={homeLabel}
+      />
       <SessionLog title={logLabel} sessions={sessions} />
     </div>
   );
