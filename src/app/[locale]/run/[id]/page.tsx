@@ -44,6 +44,7 @@ export default async function RunPage({ params }: RunPageProps) {
         viewPrograms: tRun("viewPrograms"),
         stepCount: tRun("stepCount", { current: "{current}", total: "{total}" }),
         descriptionLabel: tRun("descriptionLabel"),
+        repeatDescription: tRun("repeatDescription"),
         minuteSingular: tRun("minuteSingular"),
         minutePlural: tRun("minutePlural"),
         secondSingular: tRun("secondSingular"),

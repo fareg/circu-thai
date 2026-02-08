@@ -17,7 +17,13 @@ export function useAudioController() {
 
   const playInstructionSafe = useCallback((text: string) => speakInstruction(text), []);
   const stopInstructionSafe = useCallback(() => stopInstructions(), []);
-  const playBeepSafe = useCallback(() => playBeep(isMuted ? 0 : volume), [isMuted, volume]);
+  const playBeepSafe = useCallback(() => {
+    if (isMuted) {
+      return;
+    }
+    music.duck();
+    void playBeep(volume);
+  }, [isMuted, music, volume]);
   const loadMusic = useCallback((src?: string) => music.load(src), [music]);
   const playMusic = useCallback(() => music.play(), [music]);
   const pauseMusic = useCallback(() => music.pause(), [music]);

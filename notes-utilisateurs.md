@@ -20,3 +20,9 @@
 ## v0.2.1 — 8 février 2026
 - **Audio robuste** : reprise automatique du moteur audio pour garantir le bip de fin d’exercice, même si le navigateur suspend l’audio.
 - **Slider 0 → 100 %** : l’ajustement du volume répond mieux sur mobile grâce à une échelle plus claire et plus précise.
+
+## v0.2.2 — 8 février 2026
+- **Relire le descriptif** : un bouton dédié permet de réentendre immédiatement l’explication de l’exercice en cours si vous avez manqué la première annonce.
+- **Focus visuel** : l’exercice actif est surligné en orange et l’anneau de progression passe du vert au rouge pour visualiser l’intensité au fil du temps.
+- **Version partout** : chaque page affiche désormais la version installée dans un cartouche en bas d’écran, pratique pour vos retours terrain.
+- **Audio discipliné** : couper la musique avant le départ empêche toute lecture parasite et les bips abaissent la musique automatiquement pour rester bien audibles.

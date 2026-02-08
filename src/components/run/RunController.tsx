@@ -33,6 +33,7 @@ interface RunControllerProps {
     unmute: string;
     stepCount: string;
     descriptionLabel: string;
+    repeatDescription: string;
     minuteSingular: string;
     minutePlural: string;
     secondSingular: string;
@@ -75,6 +76,7 @@ export function RunController({
   const [stepRemaining, setStepRemaining] = useState(0);
   const [completedSeconds, setCompletedSeconds] = useState(0);
   const [interrupts, setInterrupts] = useState(0);
+  const [currentInstruction, setCurrentInstruction] = useState<string | null>(null);
   const timerRef = useRef<PreciseTimer | null>(null);
   const delayRef = useRef<NodeJS.Timeout | null>(null);
   const pendingStartRef = useRef<{ token: number } | null>(null);
@@ -151,13 +153,28 @@ export function RunController({
   };
 
   const requestMusicPlayback = useCallback(() => {
+    if (isMuted) {
+      pauseMusic();
+      return;
+    }
     if (userInteractedRef.current) {
       playMusic();
       return;
     }
     pendingMusicUnlockRef.current = true;
     playMusic();
-  }, [playMusic]);
+  }, [isMuted, pauseMusic, playMusic]);
+
+  useEffect(() => {
+    if (status !== "running") {
+      return;
+    }
+    if (isMuted) {
+      pauseMusic();
+    } else {
+      requestMusicPlayback();
+    }
+  }, [status, isMuted, pauseMusic, requestMusicPlayback]);
 
   const startStep = (index: number, announce = true) => {
     timerRef.current?.stop();
@@ -201,6 +218,7 @@ export function RunController({
         formatSpeechDuration(step.duration, labels),
       ].filter(Boolean);
       const instruction = instructionParts.join(" ");
+      setCurrentInstruction(instruction);
       const token = ++pendingTokenRef.current;
       pendingStartRef.current = { token };
       pendingPayloadRef.current = { index, announce };
@@ -211,6 +229,7 @@ export function RunController({
         }
       });
     } else {
+      setCurrentInstruction(null);
       beginStepTimer();
     }
     setStatus("running");
@@ -232,6 +251,7 @@ export function RunController({
     setStepElapsed(0);
     setStepRemaining(0);
     setInterrupts(0);
+    setCurrentInstruction(null);
   }, [pauseMusic, program.id]);
 
   const handleStart = () => {
@@ -275,7 +295,16 @@ export function RunController({
     void playInstruction(labels.completed);
     setStatus("completed");
     void onCompleted(totalSeconds, interrupts);
+    setCurrentInstruction(null);
   };
+
+  const handleReplayInstruction = useCallback(() => {
+    if (!currentInstruction) {
+      return;
+    }
+    stopInstruction();
+    void playInstruction(currentInstruction);
+  }, [currentInstruction, playInstruction, stopInstruction]);
 
   const handlePause = () => {
     setStatus("paused");
@@ -334,6 +363,8 @@ export function RunController({
   };
 
   const progress = currentStep ? Math.min(1, stepElapsed / currentStep.duration) : 0;
+  const isActiveStepContext = status === "running" || status === "paused";
+  const showReplayButton = isActiveStepContext && Boolean(currentInstruction);
 
   return (
     <section className="glass-panel px-6 py-6 text-white">
@@ -358,7 +389,7 @@ export function RunController({
           </div>
           <h2 className="text-2xl font-semibold break-words">{program.name}</h2>
           {currentExercise && (
-            <div className="space-y-1">
+            <div className="space-y-2">
               <p className="text-sm text-white/70 break-words">
                 {currentExercise.name} ({currentIndex + 1} / {program.steps.length})
               </p>
@@ -366,6 +397,15 @@ export function RunController({
                 <p className="text-sm text-white/60 break-words">
                   {labels.descriptionLabel}: {currentExercise.description}
                 </p>
+              )}
+              {showReplayButton && (
+                <button
+                  type="button"
+                  onClick={handleReplayInstruction}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80 transition hover:text-white focus-ring"
+                >
+                  {labels.repeatDescription}
+                </button>
               )}
             </div>
           )}
@@ -383,14 +423,31 @@ export function RunController({
         <div className="mt-6 rounded-2xl bg-white/5 p-4">
           <p className="text-xs uppercase tracking-[0.3em] text-white/60">{labels.summaryHeading}</p>
           <ul className="mt-3 space-y-2 text-sm text-white/80">
-            {summaryItems.map((item) => (
-              <li key={item.id} className="flex items-center justify-between gap-4">
-                <span className="font-medium text-white">
-                  {item.index + 1}. {item.title}
-                </span>
-                <span className="text-white/70">{formatDuration(item.duration)}</span>
-              </li>
-            ))}
+            {summaryItems.map((item) => {
+              const isActive = isActiveStepContext && item.index === currentIndex;
+              const titleClass = cn(
+                "font-medium",
+                isActive ? "text-orange-200" : "text-white"
+              );
+              const durationClass = cn(
+                isActive ? "text-orange-200/80" : "text-white/70"
+              );
+              return (
+                <li
+                  key={item.id}
+                  aria-current={isActive ? "step" : undefined}
+                  className={cn(
+                    "flex items-center justify-between gap-4 rounded-xl px-3 py-2 transition",
+                    isActive ? "bg-white/10 text-white shadow-lg shadow-amber-300/25" : "bg-white/5 text-white/80"
+                  )}
+                >
+                  <span className={titleClass}>
+                    {item.index + 1}. {item.title}
+                  </span>
+                  <span className={durationClass}>{formatDuration(item.duration)}</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -411,8 +468,8 @@ export function RunController({
             />
             <defs>
               <linearGradient id="progress" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#6cfac4" />
-                <stop offset="100%" stopColor="#ff9c73" />
+                <stop offset="0%" stopColor="#2dd4bf" />
+                <stop offset="100%" stopColor="#f97316" />
               </linearGradient>
             </defs>
             <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="#fff">

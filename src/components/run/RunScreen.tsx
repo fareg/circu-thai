@@ -30,6 +30,7 @@ interface RunLabels {
   viewPrograms: string;
   stepCount: string;
   descriptionLabel: string;
+  repeatDescription: string;
   minuteSingular: string;
   minutePlural: string;
   secondSingular: string;

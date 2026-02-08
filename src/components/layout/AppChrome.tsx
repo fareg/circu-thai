@@ -37,7 +37,7 @@ export function AppChrome({ children, locale }: AppChromeProps) {
   };
 
   return (
-    <div className="min-h-screen px-4 pb-16 pt-10 sm:px-8">
+    <div className="min-h-screen px-4 pb-16 pt-10 sm:px-8 flex flex-col">
       {!isRunRoute ? (
         <header className="glass-panel flex flex-col gap-6 px-6 py-4 sm:flex-row sm:items-center">
           <div>
@@ -69,7 +69,11 @@ export function AppChrome({ children, locale }: AppChromeProps) {
           </nav>
         </header>
       ) : null}
-      <main className={cn(isRunRoute ? "mt-0" : "mt-10", "space-y-8")}>{children}</main>
+      <main className={cn(isRunRoute ? "mt-0" : "mt-10", "space-y-8 flex-1")}>{children}</main>
+      <footer className="mt-10 rounded-2xl bg-white/5 px-6 py-4 text-white/70">
+        <p className="text-xs uppercase tracking-[0.3em] text-white/50">{t("version")}</p>
+        <p className="mt-2 text-2xl font-semibold text-white">{appVersion}</p>
+      </footer>
     </div>
   );
 }

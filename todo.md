@@ -6,6 +6,9 @@
 [X] Indiquer avec un audio quand la session est terminée avec arret de la musique
 * [X] Supprimer le bouton "commencer"
 * [X] Supprimer le lancement automatique
+* [X] Afficher la version dans une section dédiée au bas de toutes les pages
+* [X] Mettre en surbrillance l'exercice en cours 
+* [ ]
 
 ## Corrections
 [ ] 

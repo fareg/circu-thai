@@ -16,3 +16,8 @@
 ## v0.2.1 — 2026-02-08
 - Audio : reprise automatique du contexte Web Audio avant chaque bip pour éviter les silences sur certains navigateurs mobiles.
 - Slider de volume : plage 0 → 100 % avec reconversion interne (0 → 1) pour une précision accrue et une meilleure compatibilité touch.
+
+## v0.2.2 — 2026-02-08
+- Lecture audio : les bips reprennent toujours la description en un clic (« Relire le descriptif ») et plafonnent la musique avec un ducking automatique pour garder le signal clair.
+- Musique : le bouton « Couper » bloque réellement la lecture même avant le démarrage, et réactive automatiquement la piste lors du rétablissement du son.
+- Interface run : l’exercice en cours est mis en surbrillance ambre/rouge, la jauge circulaire passe du vert au rouge, et un badge de version commun est désormais affiché en bas de page.

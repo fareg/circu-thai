@@ -88,6 +88,7 @@
     "remaining": "Restant",
     "stepCount": "Exercice {current} sur {total}",
     "descriptionLabel": "Description",
+    "repeatDescription": "Relire le descriptif",
     "minuteSingular": "minute",
     "minutePlural": "minutes",
     "secondSingular": "seconde",
