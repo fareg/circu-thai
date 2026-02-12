@@ -1,8 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MusicPanel } from "@/components/run/MusicPanel";
 import { useAudioController } from "@/hooks/useAudioController";
+import {
+  COMPLETION_BEEP_DURATION_MS,
+  COMPLETION_BEEP_FREQUENCY,
+  SIDE_SWITCH_BEEP_DURATION_MS,
+  SIDE_SWITCH_BEEP_FREQUENCY,
+  SIDE_SWITCH_DOUBLE_BEEP_DELAY_MS,
+  WARNING_BEEP_DURATION_MS,
+  WARNING_BEEP_FREQUENCY,
+  WARNING_THRESHOLD_MS,
+} from "@/lib/audio/cueConfig";
 
 interface SoundTestLabels {
   title: string;
@@ -11,7 +22,10 @@ interface SoundTestLabels {
   instructionPlaceholder: string;
   defaultInstruction: string;
   speak: string;
-  beep: string;
+  completionBeep: string;
+  warningBeep: string;
+  sideSwitchBeep: string;
+  sideSwitchDoubleBeep: string;
   musicHeading: string;
   sampleLabel: string;
   sampleSelectLabel: string;
@@ -41,6 +55,8 @@ interface SoundTestLabProps {
   sampleMusicUrl: string;
   sampleOptions?: Array<{ label: string; url: string }>;
   labels: SoundTestLabels;
+  homeHref?: string;
+  homeLabel?: string;
 }
 
 const shortenAudioLabel = (source?: string) => {
@@ -57,7 +73,7 @@ const shortenAudioLabel = (source?: string) => {
   }
 };
 
-export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels }: SoundTestLabProps) {
+export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels, homeHref, homeLabel }: SoundTestLabProps) {
   const {
     playInstruction,
     playBeep,
@@ -80,6 +96,7 @@ export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels }: SoundTes
     sampleMusicUrl ? labels.statusLoaded.replace("{track}", shortenAudioLabel(sampleMusicUrl)) : labels.statusIdle
   );
   const [timeline, setTimeline] = useState({ position: 0, duration: 0 });
+  const sideSwitchTimeoutRef = useRef<number | null>(null);
 
   const trackLabel = useMemo(() => shortenAudioLabel(currentTrack), [currentTrack]);
 
@@ -103,8 +120,18 @@ export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels }: SoundTes
     }
   }, [currentTrack]);
 
+  useEffect(() => {
+    return () => {
+      if (sideSwitchTimeoutRef.current !== null) {
+        window.clearTimeout(sideSwitchTimeoutRef.current);
+        sideSwitchTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const sliderMax = timeline.duration > 0 ? timeline.duration : 1;
   const sliderValue = timeline.duration > 0 ? timeline.position : 0;
+  const warningWindowSeconds = Math.round(WARNING_THRESHOLD_MS / 1000);
 
   const handleTimelineChange = (value: number) => {
     seekMusic(value);
@@ -133,10 +160,72 @@ export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels }: SoundTes
     setStatus(labels.statusInstructionQueued);
   };
 
-  const handleBeep = () => {
-    playBeep();
+  const triggerBeep = (frequency: number, durationMs: number) => {
+    playBeep(frequency, durationMs / 1000);
     setStatus(labels.statusBeepPlayed);
   };
+
+  const handleCompletionBeep = () => {
+    triggerBeep(COMPLETION_BEEP_FREQUENCY, COMPLETION_BEEP_DURATION_MS);
+  };
+
+  const handleWarningBeep = () => {
+    triggerBeep(WARNING_BEEP_FREQUENCY, WARNING_BEEP_DURATION_MS);
+  };
+
+  const handleSideSwitchBeep = () => {
+    triggerBeep(SIDE_SWITCH_BEEP_FREQUENCY, SIDE_SWITCH_BEEP_DURATION_MS);
+  };
+
+  const handleSideSwitchDoubleBeep = () => {
+    triggerBeep(SIDE_SWITCH_BEEP_FREQUENCY, SIDE_SWITCH_BEEP_DURATION_MS);
+    if (sideSwitchTimeoutRef.current !== null) {
+      window.clearTimeout(sideSwitchTimeoutRef.current);
+    }
+    sideSwitchTimeoutRef.current = window.setTimeout(() => {
+      triggerBeep(SIDE_SWITCH_BEEP_FREQUENCY, SIDE_SWITCH_BEEP_DURATION_MS);
+      sideSwitchTimeoutRef.current = null;
+    }, SIDE_SWITCH_DOUBLE_BEEP_DELAY_MS);
+  };
+
+  const beepButtons = [
+    {
+      key: "completion",
+      label: labels.completionBeep,
+      meta: `${COMPLETION_BEEP_FREQUENCY} Hz · ${COMPLETION_BEEP_DURATION_MS} ms`,
+      onClick: handleCompletionBeep,
+      className:
+        "rounded-full border border-white/40 px-5 py-2 text-left text-sm text-white focus-ring leading-tight",
+      metaClassName: "text-[11px] text-white/60",
+    },
+    {
+      key: "warning",
+      label: labels.warningBeep,
+      meta: `${WARNING_BEEP_FREQUENCY} Hz · ${WARNING_BEEP_DURATION_MS} ms • window: ${warningWindowSeconds}s`,
+      onClick: handleWarningBeep,
+      className:
+        "rounded-full border border-orange-200/60 px-5 py-2 text-left text-sm text-orange-100 focus-ring leading-tight",
+      metaClassName: "text-[11px] text-orange-200/80",
+    },
+    {
+      key: "side-switch-single",
+      label: labels.sideSwitchBeep,
+      meta: `${SIDE_SWITCH_BEEP_FREQUENCY} Hz · ${SIDE_SWITCH_BEEP_DURATION_MS} ms`,
+      onClick: handleSideSwitchBeep,
+      className:
+        "rounded-full border border-emerald-200/40 px-5 py-2 text-left text-sm text-emerald-50 focus-ring leading-tight",
+      metaClassName: "text-[11px] text-emerald-200/70",
+    },
+    {
+      key: "side-switch-double",
+      label: labels.sideSwitchDoubleBeep,
+      meta: `${SIDE_SWITCH_BEEP_FREQUENCY} Hz · ${SIDE_SWITCH_BEEP_DURATION_MS} ms ×2 +${SIDE_SWITCH_DOUBLE_BEEP_DELAY_MS} ms`,
+      onClick: handleSideSwitchDoubleBeep,
+      className:
+        "rounded-full border border-emerald-300/80 px-5 py-2 text-left text-sm text-emerald-100 focus-ring leading-tight",
+      metaClassName: "text-[11px] text-emerald-200/90",
+    },
+  ];
 
   const handleSampleLoad = (url: string) => {
     if (!url) {
@@ -183,6 +272,16 @@ export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels }: SoundTes
 
   return (
     <section className="space-y-6">
+      {homeHref && (
+        <div className="flex justify-end">
+          <Link
+            href={homeHref}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 focus-ring"
+          >
+            {homeLabel ?? "Home"}
+          </Link>
+        </div>
+      )}
       <div className="glass-panel px-6 py-6 text-white">
         <p className="text-xs uppercase tracking-[0.3em] text-white/50">{labels.title}</p>
         <p className="mt-3 text-sm text-white/80">{labels.intro}</p>
@@ -206,13 +305,17 @@ export function SoundTestLab({ sampleMusicUrl, sampleOptions, labels }: SoundTes
             >
               {labels.speak}
             </button>
-            <button
-              type="button"
-              onClick={handleBeep}
-              className="rounded-full border border-white/40 px-5 py-2 text-sm text-white focus-ring"
-            >
-              {labels.beep}
-            </button>
+            {beepButtons.map((button) => (
+              <button
+                key={button.key}
+                type="button"
+                onClick={button.onClick}
+                className={`${button.className} flex flex-col gap-0.5`}
+              >
+                <span className="font-medium">{button.label}</span>
+                <span className={`block ${button.metaClassName} text-left`}>{button.meta}</span>
+              </button>
+            ))}
           </div>
         </div>
         <div className="glass-panel flex flex-col gap-4 px-6 py-6 text-white">

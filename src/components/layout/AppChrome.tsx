@@ -22,6 +22,7 @@ export function AppChrome({ children, locale }: AppChromeProps) {
     { href: homePath, label: t("home") },
     { href: `/${locale}/programs`, label: t("programs") },
     { href: `/${locale}/builder`, label: t("builder") },
+    { href: `/${locale}/exercises`, label: t("exercises") },
     { href: `/${locale}/run/demo-flow`, label: t("run") },
     { href: `/${locale}/run/sound-test`, label: t("soundTest") },
   ];

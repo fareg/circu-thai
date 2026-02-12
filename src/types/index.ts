@@ -10,6 +10,9 @@ export interface Exercise {
   intensity: ExerciseIntensity;
   defaultDuration: number;
   media?: string;
+  sideSwitch?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ProgramStep {

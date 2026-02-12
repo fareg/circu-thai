@@ -1,10 +1,21 @@
 import { Exercise } from "@/types";
 
-export const exerciseCatalog: Exercise[] = [
+const defaultExerciseTimestamp = "2024-01-05T08:00:00.000Z";
+const aquaticBackReleaseTimestamp = "2026-02-09T08:00:00.000Z";
+const aquaticBackReleaseIds = new Set([
+  "water-supported-knee-hugs",
+  "water-floating-cat-cow",
+  "water-wall-squat-glide",
+  "water-lumbar-rotation",
+  "water-hip-opener",
+]);
+const SIDE_SWITCH_SUFFIX = " (alternance)";
+
+const baseExercises: Omit<Exercise, "createdAt" | "updatedAt">[] = [
   {
     id: "ankle-pumps",
     name: "Pompes de cheville",
-    description: "Flexion extension des chevilles allonge pour activer le retour veineux.",
+    description: "Flexion extension des chevilles allongées pour activer le retour veineux.",
     tags: ["warmup", "mobility"],
     zone: "legs",
     intensity: "low",
@@ -19,20 +30,22 @@ export const exerciseCatalog: Exercise[] = [
     zone: "legs",
     intensity: "low",
     defaultDuration: 75,
+    sideSwitch: true,
   },
   {
     id: "knee-circles",
     name: "Cercles de genoux",
-    description: "Genoux leves, decrivez des cercles lents pour drainer le genou.",
+    description: "Genoux levés, décrivez des cercles lents pour drainer le genoux.",
     tags: ["mobility", "flow"],
     zone: "legs",
     intensity: "low",
     defaultDuration: 60,
+    sideSwitch: true,
   },
   {
     id: "calf-raises",
-    name: "Releves de mollets",
-    description: "Sur la pointe des pieds, montez descendez avec controle pour activer la pompe plantaire.",
+    name: "Relevés de mollets",
+    description: "Sur la pointe des pieds, montez descendez avec contrôle pour activer la pompe plantaire.",
     tags: ["strength"],
     zone: "legs",
     intensity: "medium",
@@ -41,7 +54,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "marching",
     name: "Marche douce",
-    description: "Levez un genou apres l'autre debout pour stimuler la circulation globale.",
+    description: "Levez un genou après l'autre debout pour stimuler la circulation globale.",
     tags: ["flow", "cardio"],
     zone: "full",
     intensity: "medium",
@@ -50,7 +63,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "quad-sets",
     name: "Set quadriceps",
-    description: "Contractez relachez le quadriceps avec la jambe tendue.",
+    description: "Contractez relâchez le quadriceps avec la jambe tendue.",
     tags: ["strength"],
     zone: "legs",
     intensity: "low",
@@ -59,7 +72,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "glute-bridge",
     name: "Pont fessier",
-    description: "Soulevez le bassin vertebre par vertebre puis redescendez pour mobiliser le bassin.",
+    description: "Soulevez le bassin vertèbre par vertèbre puis redescendez pour mobiliser le bassin.",
     tags: ["core", "strength"],
     zone: "core",
     intensity: "medium",
@@ -77,7 +90,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "arm-circles",
     name: "Cercles de bras",
-    description: "Bras tendus, dessinez des cercles pour drainer les membres superieurs.",
+    description: "Bras tendus, dessinez des cercles pour drainer les membres supérieurs.",
     tags: ["upper", "mobility"],
     zone: "arms",
     intensity: "low",
@@ -86,7 +99,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "wrist-rolls",
     name: "Roulis de poignets",
-    description: "Tournez les poignets paumes vers le haut puis vers le bas pour soulager la retention.",
+    description: "Tournez les poignets paumes vers le haut puis vers le bas pour soulager la rétention.",
     tags: ["upper"],
     zone: "arms",
     intensity: "low",
@@ -104,7 +117,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "neck-fans",
     name: "Eventail cervical",
-    description: "Inclinez doucement la tete de chaque cote pour deloger les tensions.",
+    description: "Inclinez doucement la tête de chaque côté pour déloger les tensions.",
     tags: ["upper", "calm"],
     zone: "arms",
     intensity: "low",
@@ -113,7 +126,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "pelvic-tilt",
     name: "Bascule pelvienne",
-    description: "Inclinez le bassin en inspirant puis relachez en expirant pour mobiliser le bas du dos.",
+    description: "Inclinez le bassin en inspirant puis relâchez en expirant pour mobiliser le bas du dos.",
     tags: ["core"],
     zone: "core",
     intensity: "low",
@@ -121,17 +134,18 @@ export const exerciseCatalog: Exercise[] = [
   },
   {
     id: "side-shift",
-    name: "Deplacement lateral",
-    description: "Transferez le poids d'une jambe a l'autre en douceur pour stimuler les ganglions inguinaux.",
+    name: "Déplacement latéral",
+    description: "Transférez le poids d'une jambe à l'autre en douceur pour stimuler les ganglions inguinaux.",
     tags: ["flow"],
     zone: "legs",
     intensity: "medium",
     defaultDuration: 90,
+    sideSwitch: true,
   },
   {
     id: "toe-fan",
-    name: "Eventail d'orteils",
-    description: "Ecartez rassemblez les orteils pour activer la pompe distale.",
+    name: "Éventail d'orteils",
+    description: "Écartez rassemblez les orteils pour activer la pompe distale.",
     tags: ["mobility"],
     zone: "legs",
     intensity: "low",
@@ -140,7 +154,7 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "water-forward-walk",
     name: "Marche avant active",
-    description: "Grands pas lents dans l'eau avec deroulement talon pointe pour chauffer tout le corps.",
+    description: "Grands pas lents dans l'eau avec déroulement talon pointe pour chauffer tout le corps.",
     tags: ["warmup", "water", "flow"],
     zone: "full",
     intensity: "low",
@@ -148,8 +162,8 @@ export const exerciseCatalog: Exercise[] = [
   },
   {
     id: "water-backward-walk",
-    name: "Marche arriere controlee",
-    description: "Petits pas vers l'arriere buste droit pour engager les mollets et l'equilibre.",
+    name: "Marche arrière contrôlée",
+    description: "Petits pas vers l'arrière buste droit pour engager les mollets et l'équilibre.",
     tags: ["warmup", "water"],
     zone: "legs",
     intensity: "low",
@@ -157,16 +171,17 @@ export const exerciseCatalog: Exercise[] = [
   },
   {
     id: "water-side-steps",
-    name: "Pas lateraux dans l'eau",
-    description: "Pas chasses droite gauche genoux flechis pour ouvrir les hanches en douceur.",
+    name: "Pas latéraux dans l'eau",
+    description: "Pas chassés droite gauche genoux fléchis pour ouvrir les hanches en douceur.",
     tags: ["warmup", "mobility", "water"],
     zone: "legs",
     intensity: "medium",
     defaultDuration: 90,
+    sideSwitch: true,
   },
   {
     id: "water-toe-raises",
-    name: "Montees sur pointes aquatiques",
+    name: "Montées sur pointes aquatiques",
     description: "Monte sur les pointes puis redescends lentement pour relancer la pompe plantaire.",
     tags: ["strength", "water"],
     zone: "legs",
@@ -175,8 +190,8 @@ export const exerciseCatalog: Exercise[] = [
   },
   {
     id: "water-aqua-bike",
-    name: "Velo dans l'eau",
-    description: "Appuie toi au bord ou sur une frite et pedale avec des mouvements amples et fluides.",
+    name: "vélo dans l'eau",
+    description: "Appuie toi au bord ou sur une frite et pédale avec des mouvements amples et fluides.",
     tags: ["cardio", "water"],
     zone: "legs",
     intensity: "medium",
@@ -185,11 +200,11 @@ export const exerciseCatalog: Exercise[] = [
   {
     id: "water-soft-kicks",
     name: "Battements doux",
-    description: "Petits battements reguliers jambes detendues en maintenant un rythme respiratoire calme.",
+    description: "Petits battements réguliers jambes détendues en maintenant un rythme respiratoire calme.",
     tags: ["cardio", "water"],
     zone: "legs",
     intensity: "medium",
-    defaultDuration: 180,
+    defaultDuration: 120,
   },
   {
     id: "water-ankle-circles",
@@ -199,15 +214,63 @@ export const exerciseCatalog: Exercise[] = [
     zone: "legs",
     intensity: "low",
     defaultDuration: 120,
+    sideSwitch: true,
   },
   {
     id: "water-foot-flex",
     name: "Flexions extensions des pieds",
-    description: "Comme une pedale alterne pointe et flexion pour drainer mollets et chevilles.",
+    description: "Comme une pédale alterne pointe et flexion pour drainer mollets et chevilles.",
     tags: ["mobility", "water"],
     zone: "legs",
     intensity: "medium",
-    defaultDuration: 180,
+    defaultDuration: 120,
+    sideSwitch: true,
+  },
+  {
+    id: "water-supported-knee-hugs",
+    name: "Genoux poitrine assistés",
+    description: "Adosse toi au mur, ramène un genou après l'autre vers la poitrine pour relâcher les lombaires.",
+    tags: ["mobility", "water", "back"],
+    zone: "core",
+    intensity: "low",
+    defaultDuration: 120,
+  },
+  {
+    id: "water-floating-cat-cow",
+    name: "Dos rond/creux aquatique",
+    description: "Main sur une frite, arrondis puis ouvre la cage thoracique pour mobiliser toute la colonne.",
+    tags: ["mobility", "water", "back"],
+    zone: "core",
+    intensity: "low",
+    defaultDuration: 120,
+  },
+  {
+    id: "water-wall-squat-glide",
+    name: "Glisses dos au mur",
+    description: "Glisse le dos sur le mur de la piscine en demi flexion pour renforcer sans surcharge.",
+    tags: ["strength", "water", "back"],
+    zone: "legs",
+    intensity: "medium",
+    defaultDuration: 90,
+  },
+  {
+    id: "water-lumbar-rotation",
+    name: "Rotations lombaires appuyées",
+    description: "Bras tendus sur le rebord pivote le bassin droite/gauche pour détasser les lombaires.",
+    tags: ["mobility", "water", "back"],
+    zone: "core",
+    intensity: "low",
+    defaultDuration: 120,
+  },
+  {
+    id: "water-hip-opener",
+    name: "Ouvertures de hanches dans l'eau",
+    description: "Lève le genou puis ouvre sur le côté en gardant les abdos légers pour libérer les hanches.",
+    tags: ["mobility", "water", "back"],
+    zone: "legs",
+    intensity: "medium",
+    defaultDuration: 120,
+    sideSwitch: true,
   },
   {
     id: "water-relax-walk",
@@ -216,6 +279,14 @@ export const exerciseCatalog: Exercise[] = [
     tags: ["cooldown", "water", "breath"],
     zone: "full",
     intensity: "low",
-    defaultDuration: 180,
+    defaultDuration: 120,
   },
 ];
+
+export const exerciseCatalog: Exercise[] = baseExercises.map((exercise) => {
+  const timestamp = aquaticBackReleaseIds.has(exercise.id) ? aquaticBackReleaseTimestamp : defaultExerciseTimestamp;
+  const sideSwitch = exercise.sideSwitch ?? false;
+  const baseName = exercise.name.replace(SIDE_SWITCH_SUFFIX, "");
+  const name = sideSwitch ? `${baseName}${SIDE_SWITCH_SUFFIX}` : baseName;
+  return { ...exercise, name, sideSwitch, createdAt: timestamp, updatedAt: timestamp };
+});

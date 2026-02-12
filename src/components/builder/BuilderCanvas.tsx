@@ -1,11 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Exercise } from "@/types";
 import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import { ExerciseFilterState, ExerciseFilters } from "@/components/exercises/ExerciseFilters";
 import { ProgramTimeline } from "@/components/programs/ProgramTimeline";
-import { ProgramStep } from "@/types";
 import { useExercises, useProgramActions, usePrograms } from "@/hooks/usePrograms";
 import { useProgramDraftStore } from "@/store/programDraft";
 import { curatedTracks } from "@/lib/audio/library";
@@ -33,6 +33,10 @@ interface BuilderCanvasProps {
     intensity: string;
     reset: string;
     search: string;
+    catalogHint: string;
+    catalogCta: string;
+    zoneOptions: Record<ExerciseFilterState["zone"], string>;
+    intensityOptions: Record<ExerciseFilterState["intensity"], string>;
   };
   programId?: string;
   locale: string;
@@ -241,11 +245,29 @@ export function BuilderCanvas({ labels, programId, locale }: BuilderCanvasProps)
           reset: labels.reset,
           search: labels.search,
         }}
+        optionLabels={{
+          zone: labels.zoneOptions,
+          intensity: labels.intensityOptions,
+        }}
       />
+      <div className="rounded-2xl bg-white/5 px-4 py-3 text-sm text-white/70 flex flex-wrap items-center gap-3">
+        <span>{labels.catalogHint}</span>
+        <Link
+          href={`/${locale}/exercises`}
+          className="inline-flex items-center gap-1 text-white font-semibold underline decoration-dotted underline-offset-4 hover:decoration-solid focus-ring"
+        >
+          {labels.catalogCta}
+        </Link>
+      </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-4">
           {filteredExercises.map((exercise) => (
-            <ExerciseCard key={exercise.id} exercise={exercise} onSelect={upsertStep} ctaLabel={labels.add} />
+            <ExerciseCard
+              key={exercise.id}
+              exercise={exercise}
+              onSelect={upsertStep}
+              ctaLabel={labels.add}
+            />
           ))}
         </div>
         <div>

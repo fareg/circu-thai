@@ -3,6 +3,7 @@
     "home": "Accueil",
     "programs": "Programmes",
     "builder": "Assembleur",
+    "exercises": "Exercices",
     "run": "Y aller",
     "soundTest": "Test son",
     "version": "Version"
@@ -60,7 +61,56 @@
     "duration": "Durée",
     "notes": "Notes rapides",
     "lastUpdate": "Dernière mise à jour",
-    "emptyTimeline": "Ajoutez des exercices pour voir la chronologie."
+    "emptyTimeline": "Ajoutez des exercices pour voir la chronologie.",
+    "catalogHint": "Besoin de modifier le texte d'un exercice ?",
+    "catalogCta": "Ouvrir la gestion des exercices",
+    "zoneOptions": {
+      "all": "Toutes les zones",
+      "legs": "Jambes",
+      "arms": "Bras",
+      "core": "Tronc",
+      "full": "Corps entier"
+    },
+    "intensityOptions": {
+      "all": "Toutes les intensités",
+      "low": "Faible",
+      "medium": "Modérée",
+      "high": "Élevée"
+    }
+  },
+  "exercises": {
+    "title": "Catalogue d'exercices",
+    "intro": "Ajustez libellés et descriptifs pour garder les annonces vocales fidèles à vos consignes.",
+    "countLabel": "Affichage {current} / {total} exercices",
+    "filters": "Filtres",
+    "zone": "Zone",
+    "intensity": "Intensité",
+    "reset": "Réinitialiser",
+    "search": "Recherche",
+    "emptyState": "Aucun exercice ne correspond à vos filtres.",
+    "editAction": "Modifier",
+    "editPanelTitle": "Mettre à jour l'exercice",
+    "editNameLabel": "Libellé",
+    "editDescriptionLabel": "Description détaillée",
+    "editPlaceholder": "Sélectionnez un exercice pour ajuster le texte.",
+    "lastUpdateLabel": "Dernière mise à jour",
+    "editSave": "Mettre à jour",
+    "editCancel": "Effacer la sélection",
+    "editSuccess": "Exercice mis à jour.",
+    "editError": "Impossible de mettre à jour l'exercice.",
+    "zoneOptions": {
+      "all": "Toutes les zones",
+      "legs": "Jambes",
+      "arms": "Bras",
+      "core": "Tronc",
+      "full": "Corps entier"
+    },
+    "intensityOptions": {
+      "all": "Toutes les intensités",
+      "low": "Faible",
+      "medium": "Modérée",
+      "high": "Élevée"
+    }
   },
   "run": {
     "heading": "Session guidée",
@@ -92,7 +142,10 @@
     "minuteSingular": "minute",
     "minutePlural": "minutes",
     "secondSingular": "seconde",
-    "secondPlural": "secondes"
+    "secondPlural": "secondes",
+    "sideSwitchCue": "Changez de côté maintenant",
+    "disableDescriptionNarration": "Couper le descriptif audio",
+    "enableDescriptionNarration": "Rétablir le descriptif audio"
   },
   "soundTest": {
     "title": "Diagnostic audio",
@@ -101,7 +154,10 @@
     "instructionPlaceholder": "Saisissez une phrase pour tester la synthèse vocale...",
     "defaultInstruction": "Grande inspiration, montez les bras lentement.",
     "speak": "Lire l'instruction",
-    "beep": "Tester le bip",
+    "completionBeep": "Bip fin d'exercice",
+    "warningBeep": "Bip d'alerte (10 s)",
+    "sideSwitchBeep": "Bip changement de côté",
+    "sideSwitchDoubleBeep": "Double bip changement",
     "musicHeading": "Boucle musicale",
     "sampleLabel": "Charger la boucle d'essai",
     "sampleSelectLabel": "Choisir une autre boucle",

@@ -3,6 +3,7 @@
     "home": "Home",
     "programs": "Programs",
     "builder": "Builder",
+    "exercises": "Exercises",
     "run": "Run",
     "soundTest": "Sound Test",
     "version": "Version"
@@ -60,7 +61,56 @@
     "duration": "Duration",
     "notes": "Quick notes",
     "lastUpdate": "Last update",
-    "emptyTimeline": "Add exercises to see the timeline."
+    "emptyTimeline": "Add exercises to see the timeline.",
+    "catalogHint": "Need to update exercise wording?",
+    "catalogCta": "Open the exercise manager",
+    "zoneOptions": {
+      "all": "All zones",
+      "legs": "Legs",
+      "arms": "Arms",
+      "core": "Core",
+      "full": "Full body"
+    },
+    "intensityOptions": {
+      "all": "All intensities",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
+  },
+  "exercises": {
+    "title": "Exercise catalog",
+    "intro": "Edit labels and descriptions to keep spoken cues and cards aligned with your latest guidance.",
+    "countLabel": "Showing {current} / {total} exercises",
+    "filters": "Filters",
+    "zone": "Zone",
+    "intensity": "Intensity",
+    "reset": "Reset",
+    "search": "Search",
+    "emptyState": "No exercise matches your filters.",
+    "editAction": "Edit",
+    "editPanelTitle": "Update exercise",
+    "editNameLabel": "Exercise label",
+    "editDescriptionLabel": "Detailed description",
+    "editPlaceholder": "Select an exercise to adjust its copy.",
+    "lastUpdateLabel": "Last update",
+    "editSave": "Save changes",
+    "editCancel": "Clear selection",
+    "editSuccess": "Exercise updated.",
+    "editError": "Unable to update exercise.",
+    "zoneOptions": {
+      "all": "All zones",
+      "legs": "Legs",
+      "arms": "Arms",
+      "core": "Core",
+      "full": "Full body"
+    },
+    "intensityOptions": {
+      "all": "All intensities",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    }
   },
   "run": {
     "heading": "Guided session",
@@ -92,7 +142,10 @@
     "minuteSingular": "minute",
     "minutePlural": "minutes",
     "secondSingular": "second",
-    "secondPlural": "seconds"
+    "secondPlural": "seconds",
+    "sideSwitchCue": "Switch sides now",
+    "disableDescriptionNarration": "Skip description narration",
+    "enableDescriptionNarration": "Restore description narration"
   },
   "soundTest": {
     "title": "Audio diagnostics",
@@ -101,7 +154,10 @@
     "instructionPlaceholder": "Type any sentence to test the speech synthesis...",
     "defaultInstruction": "Large breath, lift arms slowly.",
     "speak": "Speak instruction",
-    "beep": "Test beep",
+    "completionBeep": "Completion beep",
+    "warningBeep": "Warning beep (last 10 s)",
+    "sideSwitchBeep": "Side-switch beep",
+    "sideSwitchDoubleBeep": "Side-switch cue (double)",
     "musicHeading": "Music loop",
     "sampleLabel": "Load sample loop",
     "sampleSelectLabel": "Pick another loop",

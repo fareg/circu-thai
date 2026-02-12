@@ -46,6 +46,9 @@ export default async function RunPage({ params }: RunPageProps) {
         minutePlural: tRun("minutePlural"),
         secondSingular: tRun("secondSingular"),
         secondPlural: tRun("secondPlural"),
+        sideSwitchCue: tRun("sideSwitchCue"),
+        disableDescriptionNarration: tRun("disableDescriptionNarration"),
+        enableDescriptionNarration: tRun("enableDescriptionNarration"),
       }}
     />
   );

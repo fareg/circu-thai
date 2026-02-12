@@ -10,6 +10,21 @@ import { MusicPanel } from "./MusicPanel";
 import { cn } from "@/lib/utils";
 import { formatDuration } from "@/lib/time";
 import { ArrowLeft } from "lucide-react";
+import { SIDE_SWITCH_EXERCISE_IDS } from "@/data/sideSwitchDefaults";
+import {
+  COMPLETION_BEEP_DURATION_MS,
+  COMPLETION_BEEP_FREQUENCY,
+  MIN_WARNING_GAP_AFTER_SWITCH_MS,
+  SIDE_SWITCH_BEEP_DURATION_MS,
+  SIDE_SWITCH_BEEP_FREQUENCY,
+  SIDE_SWITCH_DOUBLE_BEEP_DELAY_MS,
+  SIDE_SWITCH_VISUAL_DURATION_MS,
+  WARNING_BEEP_DURATION_MS,
+  WARNING_BEEP_FREQUENCY,
+  WARNING_THRESHOLD_MS,
+} from "@/lib/audio/cueConfig";
+// LocalStorage key used to persist the “Couper le descriptif audio” toggle across sessions.
+const NARRATION_PREF_KEY = "circuthai.omitDescriptionNarration";
 
 interface RunControllerProps {
   program: ProgramRecord;
@@ -38,6 +53,9 @@ interface RunControllerProps {
     minutePlural: string;
     secondSingular: string;
     secondPlural: string;
+    sideSwitchCue: string;
+    disableDescriptionNarration: string;
+    enableDescriptionNarration: string;
   };
   onCompleted: (durationSeconds: number, interruptCount: number) => Promise<void> | void;
   homeHref?: string;
@@ -73,6 +91,13 @@ export function RunController({
   const [completedSeconds, setCompletedSeconds] = useState(0);
   const [interrupts, setInterrupts] = useState(0);
   const [currentInstruction, setCurrentInstruction] = useState<string | null>(null);
+  const [omitDescriptions, setOmitDescriptions] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+    return window.localStorage.getItem(NARRATION_PREF_KEY) === "true";
+  });
+  const [sideSwitchCueActive, setSideSwitchCueActive] = useState(false);
   const timerRef = useRef<PreciseTimer | null>(null);
   const delayRef = useRef<NodeJS.Timeout | null>(null);
   const pendingStartRef = useRef<{ token: number } | null>(null);
@@ -80,6 +105,10 @@ export function RunController({
   const pendingTokenRef = useRef(0);
   const pendingMusicUnlockRef = useRef(false);
   const userInteractedRef = useRef(false);
+  const warningIssuedRef = useRef(false);
+  const sideSwitchIssuedRef = useRef(false);
+  const sideSwitchCueTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sideSwitchBeepTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { request: requestWakeLock, release: releaseWakeLock } = useWakeLock();
 
   const currentStep = program.steps[currentIndex];
@@ -108,37 +137,40 @@ export function RunController({
     loadMusic(program.musicUrl);
   }, [loadMusic, program.musicUrl]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem(NARRATION_PREF_KEY, String(omitDescriptions));
+  }, [omitDescriptions]);
+
   useEffect(
     () => () => {
       timerRef.current?.stop();
       clearDelay();
       stopInstruction();
+      clearSideSwitchCue();
     },
     []
   );
-
-  useEffect(() => {
-    const handleUserInteract = () => {
-      userInteractedRef.current = true;
-      if (pendingMusicUnlockRef.current) {
-        pendingMusicUnlockRef.current = false;
-        playMusic();
-      }
-    };
-    window.addEventListener("pointerdown", handleUserInteract);
-    window.addEventListener("keydown", handleUserInteract);
-    return () => {
-      window.removeEventListener("pointerdown", handleUserInteract);
-      window.removeEventListener("keydown", handleUserInteract);
-      void releaseWakeLock();
-    };
-  }, [playMusic, releaseWakeLock]);
 
   const clearDelay = () => {
     if (delayRef.current) {
       clearTimeout(delayRef.current);
       delayRef.current = null;
     }
+  };
+
+  const clearSideSwitchCue = () => {
+    if (sideSwitchCueTimeoutRef.current) {
+      clearTimeout(sideSwitchCueTimeoutRef.current);
+      sideSwitchCueTimeoutRef.current = null;
+    }
+    if (sideSwitchBeepTimeoutRef.current) {
+      clearTimeout(sideSwitchBeepTimeoutRef.current);
+      sideSwitchBeepTimeoutRef.current = null;
+    }
+    setSideSwitchCueActive(false);
   };
 
   const cancelPendingStart = (options?: { keepPayload?: boolean }) => {
@@ -150,6 +182,7 @@ export function RunController({
 
   const requestMusicPlayback = useCallback(() => {
     if (isMuted) {
+      pendingMusicUnlockRef.current = false;
       pauseMusic();
       return;
     }
@@ -160,6 +193,23 @@ export function RunController({
     pendingMusicUnlockRef.current = true;
     playMusic();
   }, [isMuted, pauseMusic, playMusic]);
+
+  useEffect(() => {
+    const handleUserInteract = () => {
+      userInteractedRef.current = true;
+      if (pendingMusicUnlockRef.current) {
+        pendingMusicUnlockRef.current = false;
+        requestMusicPlayback();
+      }
+    };
+    window.addEventListener("pointerdown", handleUserInteract);
+    window.addEventListener("keydown", handleUserInteract);
+    return () => {
+      window.removeEventListener("pointerdown", handleUserInteract);
+      window.removeEventListener("keydown", handleUserInteract);
+      void releaseWakeLock();
+    };
+  }, [releaseWakeLock, requestMusicPlayback]);
 
   useEffect(() => {
     if (status !== "running") {
@@ -186,6 +236,17 @@ export function RunController({
     setStepElapsed(0);
     setStepRemaining(durationMs / 1000);
     setCurrentIndex(index);
+    warningIssuedRef.current = false;
+    sideSwitchIssuedRef.current = false;
+    clearSideSwitchCue();
+
+    const exercise = exercises[step.exerciseId];
+    const sideSwitchEnabled = exercise?.sideSwitch ?? SIDE_SWITCH_EXERCISE_IDS.has(step.exerciseId);
+    const needsSideSwitch = Boolean(sideSwitchEnabled) && step.duration >= 20;
+    const halfDurationMs = durationMs / 2;
+    const gapAfterSwitchMs = halfDurationMs - WARNING_THRESHOLD_MS;
+    const allowWarningAfterSwitch = !needsSideSwitch || gapAfterSwitchMs >= MIN_WARNING_GAP_AFTER_SWITCH_MS;
+    const shouldWarnNearEnd = durationMs > WARNING_THRESHOLD_MS && allowWarningAfterSwitch;
 
     const beginStepTimer = () => {
       pendingPayloadRef.current = null;
@@ -194,6 +255,38 @@ export function RunController({
         onTick: (elapsed, remaining) => {
           setStepElapsed(elapsed / 1000);
           setStepRemaining(remaining / 1000);
+          if (needsSideSwitch && !sideSwitchIssuedRef.current && elapsed >= halfDurationMs) {
+            sideSwitchIssuedRef.current = true;
+            playBeep(SIDE_SWITCH_BEEP_FREQUENCY, SIDE_SWITCH_BEEP_DURATION_MS / 1000);
+            if (sideSwitchBeepTimeoutRef.current) {
+              clearTimeout(sideSwitchBeepTimeoutRef.current);
+            }
+            sideSwitchBeepTimeoutRef.current = setTimeout(() => {
+              playBeep(SIDE_SWITCH_BEEP_FREQUENCY, SIDE_SWITCH_BEEP_DURATION_MS / 1000);
+              sideSwitchBeepTimeoutRef.current = null;
+            }, SIDE_SWITCH_DOUBLE_BEEP_DELAY_MS);
+            // Temporarily disable the spoken prompt to evaluate beep audibility
+            // setTimeout(() => {
+            //   void playInstruction(labels.sideSwitchCue);
+            // }, SIDE_SWITCH_CUE_DELAY_MS);
+            setSideSwitchCueActive(true);
+            if (sideSwitchCueTimeoutRef.current) {
+              clearTimeout(sideSwitchCueTimeoutRef.current);
+            }
+            sideSwitchCueTimeoutRef.current = setTimeout(() => {
+              setSideSwitchCueActive(false);
+              sideSwitchCueTimeoutRef.current = null;
+            }, SIDE_SWITCH_VISUAL_DURATION_MS);
+          }
+          if (
+            shouldWarnNearEnd &&
+            !warningIssuedRef.current &&
+            remaining <= WARNING_THRESHOLD_MS &&
+            remaining > 0
+          ) {
+            warningIssuedRef.current = true;
+            playBeep(WARNING_BEEP_FREQUENCY, WARNING_BEEP_DURATION_MS / 1000);
+          }
         },
         onComplete: () => handleStepComplete(index),
       });
@@ -201,7 +294,6 @@ export function RunController({
       requestMusicPlayback();
     };
 
-    const exercise = exercises[step.exerciseId];
     const shouldAnnounce = announce && exercise;
     if (shouldAnnounce) {
       const stepPosition = labels.stepCount
@@ -210,9 +302,11 @@ export function RunController({
       const instructionParts = [
         `${exercise.name}.`,
         `${stepPosition}.`,
-        exercise.description,
-        formatSpeechDuration(step.duration, labels),
-      ].filter(Boolean);
+      ];
+      if (!omitDescriptions && exercise.description) {
+        instructionParts.push(exercise.description);
+      }
+      instructionParts.push(formatSpeechDuration(step.duration, labels));
       const instruction = instructionParts.join(" ");
       setCurrentInstruction(instruction);
       const token = ++pendingTokenRef.current;
@@ -248,6 +342,9 @@ export function RunController({
     setStepRemaining(0);
     setInterrupts(0);
     setCurrentInstruction(null);
+    warningIssuedRef.current = false;
+    sideSwitchIssuedRef.current = false;
+    clearSideSwitchCue();
   }, [pauseMusic, program.id]);
 
   const handleStart = () => {
@@ -258,7 +355,7 @@ export function RunController({
   };
 
   const handleStepComplete = (completedIndex: number) => {
-    playBeep();
+    playBeep(COMPLETION_BEEP_FREQUENCY, COMPLETION_BEEP_DURATION_MS / 1000);
     const completedDuration = program.steps[completedIndex]?.duration ?? 0;
     setCompletedSeconds((prev) => prev + completedDuration);
     clearDelay();
@@ -292,6 +389,7 @@ export function RunController({
     setStatus("completed");
     void onCompleted(totalSeconds, interrupts);
     setCurrentInstruction(null);
+    clearSideSwitchCue();
   };
 
   const handleReplayInstruction = useCallback(() => {
@@ -325,7 +423,7 @@ export function RunController({
     if (timerRef.current) {
       timerRef.current.resume();
       setStatus("running");
-      playMusic();
+      requestMusicPlayback();
       return;
     }
     if (pendingPayloadRef.current) {
@@ -398,6 +496,13 @@ export function RunController({
                   {labels.repeatDescription}
                 </button>
               )}
+              <button
+                type="button"
+                onClick={() => setOmitDescriptions((prev) => !prev)}
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/60 transition hover:text-white focus-ring"
+              >
+                {omitDescriptions ? labels.enableDescriptionNarration : labels.disableDescriptionNarration}
+              </button>
             </div>
           )}
         </div>
@@ -412,7 +517,14 @@ export function RunController({
       </header>
       {summaryItems.length > 0 && (
         <div className="mt-6 rounded-2xl bg-white/5 p-4">
-          <p className="text-xs uppercase tracking-[0.3em] text-white/60">{labels.summaryHeading}</p>
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 text-white/60">
+            <p className="text-xs uppercase tracking-[0.3em] leading-tight">
+              {labels.summaryHeading}
+            </p>
+            <p className="text-sm font-semibold text-white/80 whitespace-nowrap text-right sm:text-base">
+              {formatDuration(totalSeconds)}
+            </p>
+          </div>
           <ul className="mt-3 space-y-2 text-sm text-white/80">
             {summaryItems.map((item) => {
               const isActive = isActiveStepContext && item.index === currentIndex;
@@ -463,7 +575,13 @@ export function RunController({
                 <stop offset="100%" stopColor="#f97316" />
               </linearGradient>
             </defs>
-            <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="#fff">
+            <text
+              x="50%"
+              y="50%"
+              dominantBaseline="middle"
+              textAnchor="middle"
+              fill={sideSwitchCueActive ? "#f87171" : "#fff"}
+            >
               {formatSeconds(Math.max(stepRemaining, 0))}
             </text>
           </svg>
@@ -480,6 +598,11 @@ export function RunController({
               <Button onClick={handleResume}>{labels.resume}</Button>
             )}
             {(status === "running" || status === "paused") && (
+              <Button onClick={handleSkip} variant="ghost">
+                {labels.skip}
+              </Button>
+            )}
+            {(status === "running" || status === "paused") && (
               <Button onClick={handlePrevious} variant="ghost" disabled={currentIndex === 0}>
                 {labels.previous}
               </Button>
@@ -491,11 +614,6 @@ export function RunController({
                 disabled={stepElapsed === 0 || !currentStep}
               >
                 {labels.restart}
-              </Button>
-            )}
-            {(status === "running" || status === "paused") && (
-              <Button onClick={handleSkip} variant="ghost">
-                {labels.skip}
               </Button>
             )}
           </div>

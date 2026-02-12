@@ -90,6 +90,19 @@ export async function deleteProgram(id: string) {
   await deleteDoc(doc(firestore, PROGRAMS_COLLECTION, id));
 }
 
+export async function updateExerciseDetails(
+  id: string,
+  updates: Pick<Exercise, "name" | "description">
+) {
+  const now = new Date().toISOString();
+  const payload = {
+    ...updates,
+    id,
+    updatedAt: now,
+  } satisfies Partial<Exercise>;
+  await setDoc(doc(firestore, EXERCISES_COLLECTION, id), payload, { merge: true });
+}
+
 export async function logSession(entry: SessionRecord) {
   await addDoc(sessionsRef, entry);
 }

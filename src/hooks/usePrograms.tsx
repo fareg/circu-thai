@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { deleteProgram, listenToExercises, listenToProgram, listenToPrograms, listenToSessions, saveProgram } from "@/lib/db";
+import {
+  deleteProgram,
+  listenToExercises,
+  listenToProgram,
+  listenToPrograms,
+  listenToSessions,
+  saveProgram,
+  updateExerciseDetails,
+} from "@/lib/db";
 import type { Exercise, ProgramRecord, SessionRecord } from "@/types";
 import { track } from "@/lib/analytics";
 
@@ -65,6 +73,15 @@ export function useProgramActions() {
     async remove(id: string) {
       await deleteProgram(id);
       track("program.delete", { id });
+    },
+  };
+}
+
+export function useExerciseActions() {
+  return {
+    async updateDetails(id: string, updates: Pick<Exercise, "name" | "description">) {
+      await updateExerciseDetails(id, updates);
+      track("exercise.update", { id });
     },
   };
 }

@@ -9,16 +9,20 @@ interface SoundTestPageProps {
 const SAMPLE_TRACK = curatedTracks[0]?.url ?? "";
 
 export default async function SoundTestPage({ params }: SoundTestPageProps) {
-  const [, soundTestT, runT] = await Promise.all([
+  const [{ locale }, soundTestT, runT, navT] = await Promise.all([
     params,
     getTranslations("soundTest"),
     getTranslations("run"),
+    getTranslations("nav"),
   ]);
+  const homeHref = `/${locale}`;
 
   return (
     <SoundTestLab
       sampleMusicUrl={SAMPLE_TRACK}
       sampleOptions={curatedTracks.map((track) => ({ label: track.label, url: track.url }))}
+      homeHref={homeHref}
+      homeLabel={navT("home")}
       labels={{
         title: soundTestT("title"),
         intro: soundTestT("intro"),
@@ -26,7 +30,10 @@ export default async function SoundTestPage({ params }: SoundTestPageProps) {
         instructionPlaceholder: soundTestT("instructionPlaceholder"),
         defaultInstruction: soundTestT("defaultInstruction"),
         speak: soundTestT("speak"),
-        beep: soundTestT("beep"),
+        completionBeep: soundTestT("completionBeep"),
+        warningBeep: soundTestT("warningBeep"),
+        sideSwitchBeep: soundTestT("sideSwitchBeep"),
+        sideSwitchDoubleBeep: soundTestT("sideSwitchDoubleBeep"),
         musicHeading: soundTestT("musicHeading"),
         sampleLabel: soundTestT("sampleLabel"),
         sampleSelectLabel: soundTestT("sampleSelectLabel"),

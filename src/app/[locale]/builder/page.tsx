@@ -43,6 +43,21 @@ export default async function BuilderPage({ searchParams, params }: BuilderPageP
         intensity: t("intensity"),
         reset: t("reset"),
         search: t("search"),
+        catalogHint: t("catalogHint"),
+        catalogCta: t("catalogCta"),
+        zoneOptions: {
+          all: t("zoneOptions.all"),
+          legs: t("zoneOptions.legs"),
+          arms: t("zoneOptions.arms"),
+          core: t("zoneOptions.core"),
+          full: t("zoneOptions.full"),
+        },
+        intensityOptions: {
+          all: t("intensityOptions.all"),
+          low: t("intensityOptions.low"),
+          medium: t("intensityOptions.medium"),
+          high: t("intensityOptions.high"),
+        },
       }}
     />
   );

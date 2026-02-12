@@ -35,6 +35,9 @@ interface RunLabels {
   minutePlural: string;
   secondSingular: string;
   secondPlural: string;
+  sideSwitchCue: string;
+  disableDescriptionNarration: string;
+  enableDescriptionNarration: string;
 }
 
 interface RunScreenProps {

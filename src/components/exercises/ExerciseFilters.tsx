@@ -18,12 +18,16 @@ interface ExerciseFiltersProps {
     reset: string;
     search: string;
   };
+  optionLabels: {
+    zone: Record<ExerciseFilterState["zone"], string>;
+    intensity: Record<ExerciseFilterState["intensity"], string>;
+  };
 }
 
 const zones: (ExerciseZone | "all")[] = ["all", "legs", "arms", "core", "full"];
 const intensities: (ExerciseIntensity | "all")[] = ["all", "low", "medium", "high"];
 
-export function ExerciseFilters({ filters, onChange, labels }: ExerciseFiltersProps) {
+export function ExerciseFilters({ filters, onChange, labels, optionLabels }: ExerciseFiltersProps) {
   const update = (key: keyof ExerciseFilterState, value: ExerciseFilterState[keyof ExerciseFilterState]) => {
     onChange({ ...filters, [key]: value });
   };
@@ -52,7 +56,7 @@ export function ExerciseFilters({ filters, onChange, labels }: ExerciseFiltersPr
           >
             {zones.map((zoneOption) => (
               <option key={zoneOption} value={zoneOption} className="bg-slate-900 text-white">
-                {zoneOption}
+                {optionLabels.zone[zoneOption] ?? zoneOption}
               </option>
             ))}
           </select>
@@ -66,7 +70,7 @@ export function ExerciseFilters({ filters, onChange, labels }: ExerciseFiltersPr
           >
             {intensities.map((intensityOption) => (
               <option key={intensityOption} value={intensityOption} className="bg-slate-900 text-white">
-                {intensityOption}
+                {optionLabels.intensity[intensityOption] ?? intensityOption}
               </option>
             ))}
           </select>
